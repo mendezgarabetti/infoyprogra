@@ -1,0 +1,16 @@
+# Binarios compilados
+bin/*
+!bin/.gitkeep
+
+# Archivos objeto y ejecutables sueltos
+*.o
+*.out
+*.exe
+
+# Datos sensibles / material ajeno al curso de C (no versionar)
+/moodle-backup/
+/colab/
+
+# Editores / SO
+.vscode/
+.DS_Store

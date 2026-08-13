@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP2 - Parte 1: Fundamentos de C</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°2 – Parte 1
+#### Fundamentos del Lenguaje C
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. Presioná F para pantalla completa, flechas o espacio para avanzar.
+
+---
+
+## Clase pasada
+
+Ya vimos, con ejemplos corriendo:
+
+- Estructura general de un programa en C (`#include`, `main`, `return`)
+- Condicionales: `if`, `if-else`
+- Bucles: `for`, `while`
+- Algo de tipos de variables
+
+Hoy completamos lo que falta para poder resolver la **Parte 1** del TP2 y
+después se ponen a trabajar en grupos.
+
+---
+
+## Plan de hoy
+
+1. Preprocesador
+2. Palabras reservadas
+3. Archivos de encabezado (`.h`)
+4. Tipos de datos primitivos
+5. Variables globales y locales
+6. Operadores (con la tabla de precedencia)
+7. Repaso de control de flujo + lo que falta (`switch`, `do-while`, `goto`)
+8. Subrutinas y funciones
+9. Recursión
+10. **A trabajar**: recorremos juntos la sección práctica (2.1 a 2.7)
+
+---
+
+## El preprocesador
+
+Un paso **previo** a la compilación: procesa las líneas que empiezan con
+`#`, antes de que el compilador vea código C real.
+
+No entiende C — es sustitución de texto.
+
+```c
+#include <stdio.h>          // "pega" el contenido del archivo acá
+#define PI 3.14159          // reemplaza PI por 3.14159 en todo el archivo
+#define MAX_ESTUDIANTES 100
+```
+
+- `< >` para librerías del sistema/estándar
+- `" "` para tus propios archivos `.h`
+
+--
+
+## ⚠️ Cuidado: las macros son texto, no funciones
+
+```c
+#define CUADRADO(x) x * x
+
+int resultado = CUADRADO(2 + 3);
+// se expande a:  2 + 3 * 2 + 3  =  11, ¡no 25!
+```
+
+Por eso siempre se envuelven en paréntesis:
+
+```c
+#define CUADRADO(x) ((x) * (x))
+```
+
+--
+
+## Compilación condicional
+
+`#ifdef`, `#ifndef`, `#endif` incluyen o excluyen bloques de código
+según si una macro está definida.
+
+Uso típico: **guardas de inclusión**, para que un `.h` no se incluya
+dos veces:
+
+```c
+#ifndef MI_ARCHIVO_H
+#define MI_ARCHIVO_H
+
+// contenido del archivo .h
+
+#endif
+```
+
+`#pragma`: directivas específicas del compilador (ej. `#pragma once`,
+alternativa moderna a la guarda de arriba).
+
+---
+
+## Palabras reservadas en ANSI C
+
+Identificadores que el lenguaje ya usa para su propia sintaxis — **no**
+se pueden usar como nombre de variable, función, etc.
+
+<div class="answer">
+
+**Son exactamente 32 en el estándar ANSI C (C89/C90).**
+
+</div>
+
+--
+
+## Por categoría
+
+| Categoría | Palabras |
+|---|---|
+| Tipos | `int` `char` `float` `double` `void` `short` `long` `signed` `unsigned` |
+| Control de flujo | `if` `else` `switch` `case` `default` `for` `while` `do` `break` `continue` `goto` `return` |
+| Clase de almacenamiento | `auto` `register` `static` `extern` |
+| Otras | `const` `volatile` `struct` `union` `enum` `typedef` `sizeof` |
+
+<p class="small">32 en total. Ejemplo típico de identificador inválido: <code>int while;</code> — <code>while</code> ya tiene un significado fijo para el compilador.</p>
+
+---
+
+## Archivos de encabezado (`.h`)
+
+- **`.c`**: contiene la **implementación** — el cuerpo de las funciones.
+- **`.h`**: contiene **declaraciones** — prototipos de función, `struct`,
+  `#define` — para compartir entre varios `.c` sin duplicar código.
+
+```c
+// subrutinas.h
+int sumar(int a, int b);       // solo la firma, sin cuerpo
+
+// subrutinas.c
+#include "subrutinas.h"
+int sumar(int a, int b) {      // acá va la implementación
+    return a + b;
+}
+```
+
+Es exactamente el patrón de `subrutinas.h` / `subrutinas.c` que vimos en
+clase.
+
+--
+
+## Bibliotecas estándar más comunes
+
+| Header | Para qué sirve |
+|---|---|
+| `stdio.h` | Entrada/salida (`printf`, `scanf`) |
+| `stdlib.h` | Memoria dinámica, conversión, `rand` |
+| `string.h` | Manejo de cadenas |
+| `math.h` | Funciones matemáticas (compilar con `-lm`) |
+| `ctype.h` | Clasificación de caracteres (`isalpha`, `tolower`) |
+| `time.h` | Fecha y hora, semilla de `rand` |
+
+---
+
+## Tipos de datos primitivos
+
+| Tipo | Qué representa | Tamaño típico | Rango típico |
+|---|---|---|---|
+| `char` | Un carácter | 1 byte | -128 a 127 |
+| `int` | Entero | 4 bytes | ±2 147 483 647 |
+| `short` | Entero corto | 2 bytes | ±32 767 |
+| `long` | Entero largo | 8 bytes (Linux 64b) | mucho mayor |
+| `float` | Decimal simple precisión | 4 bytes | ~7 dígitos |
+| `double` | Decimal doble precisión | 8 bytes | ~15 dígitos |
+
+<p class="small">Tamaños no fijados por el estándar (salvo <code>char</code>=1 byte) — usar <code>sizeof</code> para saber el real.</p>
+
+---
+
+## Variables globales y locales
+
+- **Alcance (scope)**: dónde es válido un identificador.
+  - Local: solo dentro del bloque `{ }` donde se declaró.
+  - Global: declarada fuera de toda función, visible en todo el archivo.
+- **Vida (lifetime)**: cuánto tiempo existe en memoria.
+  - Local: nace al entrar al bloque, muere al salir.
+  - Global: vive durante toda la ejecución del programa.
+
+```c
+int global = 100;              // alcance de archivo
+
+void funcion(void) {
+    int local = 5;              // alcance de bloque
+    printf("%d %d\n", global, local);
+}
+// fuera de funcion(), 'local' ya no existe
+```
+
+--
+
+## Shadowing (sombreado)
+
+Una variable local con el **mismo nombre** que una global "tapa" a la
+global dentro de su bloque:
+
+```c
+int contador = 100;             // global
+
+void funcion(void) {
+    int contador = 5;           // local: sombrea a la global
+    printf("%d\n", contador);   // imprime 5, la local
+}
+
+int main(void) {
+    printf("%d\n", contador);   // imprime 100, la global
+    funcion();
+    return 0;
+}
+```
+
+Dentro de `funcion()`, todo acceso a `contador` se refiere a la local —
+la global queda "oculta" pero sigue existiendo.
+
+---
+
+## Operadores aritméticos y de asignación
+
+| Operador | Significado |
+|---|---|
+| `+` `-` `*` `/` | suma, resta, multiplicación, división |
+| `%` | módulo (resto, solo para enteros) |
+| `++` `--` | incremento / decremento |
+| `=` `+=` `-=` `*=` `/=` | asignación (simple y compuesta) |
+
+<div class="caution">
+
+**⚠️ División entera**: si ambos operandos de `/` son `int`, el
+resultado se trunca. `7 / 2` da `3`, no `3.5`. Para forzar decimal,
+casteá al menos un operando: `(double)7 / 2`.
+
+</div>
+
+--
+
+## Operadores relacionales y lógicos
+
+| Operador | Significado |
+|---|---|
+| `==` `!=` | igual / distinto |
+| `<` `>` `<=` `>=` | comparaciones |
+| `&&` `\|\|` `!` | Y, O, negación lógica |
+
+<div class="caution">
+
+**⚠️ `=` no es `==`**: `if (x = 10)` **asigna** 10 a `x` y la condición
+da verdadera (porque 10 ≠ 0) — el compilador lo acepta sin error. Es uno
+de los bugs más comunes en C.
+
+</div>
+
+--
+
+## Operadores bitwise
+
+| Operador | Significado |
+|---|---|
+| `&` | AND bit a bit |
+| `\|` | OR bit a bit |
+| `^` | XOR bit a bit |
+| `~` | complemento (NOT) |
+| `<<` `>>` | desplazamiento izq./der. |
+
+<div class="caution">
+
+**⚠️ `&`/`|` no son `&&`/`||`**: operan bit a bit sobre **todo** el
+valor, no solo "verdadero/falso". Confundirlos es un error clásico.
+
+</div>
+
+--
+
+## Precedencia y asociatividad
+
+Determina qué operador "liga más fuerte" sin paréntesis.
+
+```c
+int r = 2 + 3 * 4;      // 14, no 20: * liga más fuerte que +
+int r2 = (2 + 3) * 4;   // 20: los paréntesis fuerzan el orden
+```
+
+Orden (de mayor a menor, resumido):
+
+`()` `[]`  →  unarios (`!` `~` `++` `--` cast)  →  `* / %`  →  `+ -`
+→ `<< >>`  →  relacionales  →  `==` `!=`  →  `&`  →  `^`  →  `|`
+→  `&&`  →  `||`  →  `?:`  →  `=`
+
+<p class="small"><strong>Regla práctica</strong>: si mezclás más de 2-3 operadores distintos, usá paréntesis explícitos aunque no hagan falta. Más legible, evita bugs.</p>
+
+---
+
+## Control de flujo (repaso + lo que falta)
+
+Ya vistos: `for`, `while`, `if`/`else`.
+
+También vimos en clases anteriores: `switch`, `do-while`, `break`,
+`continue`.
+
+**Nuevo hoy**: `goto` — salto incondicional a una etiqueta. Existe en C,
+pero se usa muy poco en código moderno (dificulta seguir el flujo del
+programa); se prefiere reestructurar con funciones o banderas.
+
+```c
+for (int i = 0; i < 10; i++) {
+    if (error) goto fin;
+    // ...
+}
+fin:
+    printf("terminado\n");
+```
+
+---
+
+## Subrutinas: la firma de una función
+
+```c
+tipo_de_retorno nombre(tipo_arg1 nombre_arg1, tipo_arg2 nombre_arg2) {
+    // cuerpo
+    return valor;   // solo si el tipo de retorno no es void
+}
+```
+
+```c
+int sumar(int a, int b) {
+    return a + b;
+}
+
+void saludar(char inicial) {   // void: no devuelve nada
+    printf("Hola, %c\n", inicial);
+}
+```
+
+Función sin argumentos: `nombre(void)`, no `nombre()`.
+
+--
+
+## Prototipo vs. definición
+
+Si una función se usa **antes** de estar definida (o vive en otro
+archivo), hace falta declarar su **prototipo**:
+
+```c
+int sumar(int a, int b);        // prototipo: termina en ; sin cuerpo
+
+int main(void) {
+    printf("%d\n", sumar(2, 3)); // el compilador ya sabe que existe
+    return 0;
+}
+
+int sumar(int a, int b) {       // definición: acá va el cuerpo
+    return a + b;
+}
+```
+
+Los prototipos suelen vivir en el `.h` del proyecto.
+
+--
+
+## Paso de argumentos: por valor
+
+Por defecto, C pasa los argumentos **por valor**: la función recibe una
+**copia**. Modificarla no afecta a la variable original.
+
+```c
+void incrementar(int n) {
+    n = n + 1;          // modifica la COPIA local
+}
+
+int main(void) {
+    int x = 5;
+    incrementar(x);
+    printf("%d\n", x);  // imprime 5, NO 6
+    return 0;
+}
+```
+
+Para modificar la variable original hace falta pasar su dirección
+(puntero) — se ve en la Unidad 3.
+
+---
+
+## Recursión
+
+Una función es **recursiva** cuando se llama a sí misma. Necesita
+siempre:
+
+1. **Caso base**: condición que devuelve un resultado directo, sin
+   volver a llamarse.
+2. **Caso recursivo**: se llama a sí misma acercándose al caso base.
+
+```c
+int factorial(int n) {
+    if (n <= 1) {                  // caso base
+        return 1;
+    }
+    return n * factorial(n - 1);   // caso recursivo
+}
+// factorial(4) = 4*3*2*1 = 24
+```
+
+--
+
+## ⚠️ Sin caso base
+
+```c
+int mal_factorial(int n) {
+    return n * mal_factorial(n - 1);  // nunca termina
+}
+```
+
+Cada llamada agrega un "marco" a la **pila de llamadas (call stack)**.
+Sin caso base (o uno que nunca se alcanza), la pila crece hasta agotar
+la memoria disponible: **stack overflow**, el programa termina
+abruptamente.
+
+Toda función recursiva debería poder responder: *¿cuál es el caso base,
+y por qué cada llamada se acerca a él?*
+
+---
+
+## Ahora a trabajar
+
+Formen grupos y avancen con la **sección práctica** de la Parte 1
+(2.1 a 2.7). Vamos a recorrer juntos algunos ejercicios como guía —
+el resto lo completan en grupo.
+
+---
+
+## 2.1 Análisis de identificadores
+
+¿Cuáles de estos identificadores **no son válidos** en C? Discutan en
+grupo antes de pasar a la respuesta.
+
+`_data123` · `2start` · `fluencia0.2` · `mi var` · `return` ·
+`VarName` · `var-name` · `floatVar` · `const1` · `while` · `stop@end`
+
+--
+
+## 2.1 Respuesta
+
+<div class="answer">
+
+**Inválidos:**
+- `2start` → empieza con dígito
+- `fluencia0.2` → el punto no es un carácter válido
+- `mi var` → no puede contener espacios
+- `return`, `while` → palabras reservadas
+- `var-name` → el guion se interpreta como resta
+- `stop@end` → `@` no es un carácter válido
+
+**Válidos:** `_data123`, `VarName`, `floatVar`, `const1`
+
+</div>
+
+---
+
+## 2.2 Buenas prácticas de nomenclatura
+
+| Convención | Ejemplo | Dónde se usa típicamente |
+|---|---|---|
+| `snake_case` | `cantidad_items` | C (convención de este curso), Python |
+| `camelCase` | `cantidadItems` | Java, JavaScript |
+| `PascalCase` | `CantidadItems` | Tipos/clases en muchos lenguajes |
+
+Nombres **descriptivos** > nombres cortos: `indice` mejor que `i`,
+salvo en bucles muy locales donde `i`/`j` es una convención aceptada.
+
+<p class="small">Mal: <code>x</code>, <code>dato2</code>, <code>flag</code> → Mejor: <code>edad_alumno</code>, <code>promedio_notas</code>, <code>esta_validado</code></p>
+
+---
+
+## 2.3 Asignación de tipos de datos
+
+¿Qué tipo de dato le asignarían a cada constante?
+
+`98.6` · `"hola"` · `'X'` · `1234567890` · `0` · `"44876523"` ·
+`"1.000.000"`
+
+--
+
+## 2.3 Respuesta
+
+<div class="answer">
+
+- `98.6` → `double`
+- `"hola"` → cadena (`char[]`/`char*`) — no existe tipo `string` nativo
+- `'X'` → `char` (comillas simples = un carácter)
+- `1234567890` → `int`
+- `0` → `int`
+- `"44876523"` y `"1.000.000"` → **cadenas**, aunque parezcan números:
+  están entre comillas dobles
+
+</div>
+
+---
+
+## 2.4 Validación de constantes
+
+¿Cuáles de estas constantes **no son válidas** en C?
+
+`3.14` · `-99` · `8 + 4` · `"true"` · `1,234` · `"dos"* 2`
+
+<p class="small">⚠️ Hay más ítems en el PDF original con caracteres especiales — ábranlo en pantalla, el texto extraído puede tener ruido de conversión.</p>
+
+--
+
+## 2.4 Respuesta
+
+<div class="answer">
+
+- `8 + 4` → no es una constante, es una **expresión**
+- `1,234` → inválida: la coma no es separador de miles en C
+- `"dos"* 2` → compila sintácticamente pero es **error de tipos**: no se
+  puede multiplicar un `char*` por un `int`
+- `"true"` → válida como cadena, pero **no** es un booleano de C
+
+</div>
+
+---
+
+## 2.5 Análisis de expresiones
+
+¿Son válidas? ¿Qué devuelven?
+
+`8 / 2 * 3 + 1` · `10 == 10 || 5 < 3` · `7 > 2 > 5` ·
+`4.5 * "2"` · `15 % 4 = 3` · `7 - 3 + 2.5`
+
+--
+
+## 2.5 Respuesta
+
+<div class="answer">
+
+- `8 / 2 * 3 + 1` → `13` (int)
+- `7 > 2 > 5` → `(7>2) > 5` → `1 > 5` → `0` — ¡no es una cadena de
+  comparación matemática como en Python!
+- `4.5 * "2"` → **inválida**: `double` × `char*` no tiene sentido
+- `15 % 4 = 3` → **inválida**: el lado izquierdo de `=` debe ser una
+  variable (*lvalue*), no una expresión
+- `7 - 3 + 2.5` → `6.5` (double, por promoción)
+
+</div>
+
+---
+
+## 2.6 Conversión de expresión algebraica
+
+Convertir a C, usando `pow()`, `sqrt()`, `fabs()`, con el mínimo de
+paréntesis necesario.
+
+<div class="caution">
+
+⚠️ Abran el PDF original en pantalla para copiar la fórmula — al
+extraer el texto del documento algunos símbolos matemáticos pueden
+salir distorsionados. No la resuelvan de memoria a partir de una
+transcripción.
+
+</div>
+
+Recuerden: `pow(base, exponente)`, `sqrt(valor)`, `fabs(valor)`, y
+repasar la tabla de precedencia de la slide anterior para minimizar
+paréntesis sin cambiar el resultado.
+
+---
+
+## 2.7 Análisis de fragmentos de código
+
+Para cada uno: ¿es correcto? Si no, ¿qué tipo de error es —
+**compilación**, **ejecución** o **lógico**?
+
+--
+
+### Fragmento A
+
+```c
+int main() {
+    int a = 5, b = 10, c;
+    c = a + b;
+    printf("%d\n", c);
+    return 0;
+}
+```
+
+<div class="answer fragment">
+
+**Correcto.** Imprime `15`.
+
+</div>
+
+--
+
+### Fragmento B
+
+```c
+int main() {
+    int x = 10;
+    if (x > 5)
+        printf("x is greater than 5\n");
+    else
+        printf("x is less than or equal to 5\n");
+    return 0;
+}
+```
+
+<div class="answer fragment">
+
+**Correcto.** Imprime `x is greater than 5`.
+
+</div>
+
+--
+
+### Fragmento C
+
+```c
+int main() {
+    int i;
+    for (i = 0; i < 10; i++) {
+        printf("%d ", i);
+    }
+    return 0;
+}
+```
+
+<div class="answer fragment">
+
+**Correcto.** Imprime `0 1 2 3 4 5 6 7 8 9`.
+
+</div>
+
+--
+
+### Fragmento D
+
+```c
+int main() {
+    int a = 5, b = 0;
+    printf("%d\n", a / b);
+    return 0;
+}
+```
+
+<div class="answer fragment">
+
+**Compila sin problema.** El error es de **ejecución**: división por
+cero entre enteros es comportamiento indefinido (típicamente el
+programa termina en Linux/x86). No lo detecta el compilador.
+
+</div>
+
+--
+
+### Fragmento E
+
+```c
+int main() {
+    int arr[5];
+    arr[1] = 1;
+    arr[2] = 2;
+    arr[3] = 3;
+    arr[4] = 4;
+    arr[5] = 5;
+    return 0;
+}
+```
+
+<div class="answer fragment">
+
+**Compila igual.** `arr[5]` está **fuera de rango**: un arreglo de 5
+elementos tiene índices válidos `0` a `4`. C no chequea límites — es
+comportamiento indefinido, puede corromper memoria silenciosamente.
+
+</div>
+
+---
+
+## Recordatorio: formato de entrega
+
+- Documento con las respuestas (PDF o Word)
+- Un archivo `.c` separado por cada ejercicio práctico que lo requiera
+- Todo el código debe **compilar sin errores ni advertencias**
+- Código comentado apropiadamente
+
+**Criterios**: precisión técnica, completitud, ejemplos funcionales,
+justificación del razonamiento, capacidad de identificar errores.
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

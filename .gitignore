@@ -10,6 +10,8 @@ bin/*
 # Datos sensibles / material ajeno al curso de C (no versionar)
 /moodle-backup/
 /colab/
+/tps/
+/infoMeca-20260902T145740Z-1-001/
 
 # Editores / SO
 .vscode/

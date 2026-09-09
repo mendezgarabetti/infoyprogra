@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP4 - Parte A: Análisis y diseño algorítmico</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°4 – Parte A
+#### Resolución de problemas algorítmicos: análisis y diseño de alto nivel
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Cambio de enfoque
+
+Hasta ahora programábamos directo: leíamos la consigna y escribíamos
+`.c`. Acá **no**. La Parte A es enteramente de **análisis y diseño**,
+sin escribir código todavía — eso viene después, en la Parte B.
+
+Cuatro problemas, mismo proceso para los cuatro.
+
+---
+
+## Plan de hoy
+
+1. Las 4 etapas del proceso (a → d de la consigna)
+2. Problema 1: Parking inteligente
+3. Problema 2: Batalla naval espacial
+4. Problema 3: Inventario de librería
+5. Problema 4: Prode entre amigos
+6. Por qué diseñar antes de programar
+7. **A trabajar**: entrega y criterios
+
+---
+
+## Las 4 etapas (a → d)
+
+a) **Lectura comprensiva en grupo** — buscando específicamente qué
+información *falta* en el enunciado.
+
+b) **Identificar** entradas, salidas, información relevante,
+requerimientos y restricciones.
+
+c) **Algoritmo de alto nivel** (ej. diagrama de flujo) — el "qué" y el
+orden de las decisiones, sin decidir todavía sintaxis ni tipos exactos.
+
+d) **Funciones candidatas**: nombre, retorno, parámetros con tipo y
+nombre, y una línea de qué hace cada una.
+
+--
+
+## "Alto nivel" no es "vago"
+
+Un algoritmo de alto nivel **no** es pseudocódigo línea por línea. Es
+la secuencia de decisiones y pasos principales — lo que dibujarías en
+un diagrama de flujo con 10-15 cajas, no con 100.
+
+<div class="answer">
+
+Ejemplo de nivel correcto: "verificar si hay lugar → calcular tarifa
+según tipo y horas → registrar ingreso". Nivel incorrecto (demasiado
+bajo): "abrir un `if`, comparar `piso1_ocupado < 50`...".
+
+</div>
+
+--
+
+## "Información faltante" es real, no un truco
+
+Los enunciados de sistemas reales **siempre** tienen huecos. Parte del
+ejercicio es encontrarlos y resolverlos con un **supuesto explícito**
+que documenten (no adivinar en silencio y seguir).
+
+<p class="small">Un supuesto razonable, escrito, vale tanto como un
+requisito que sí estaba en el enunciado — lo que no se puede es
+ignorar la ambigüedad.</p>
+
+---
+
+## Problema 1: Parking inteligente
+
+3 pisos (50 / 60 / 55 lugares). 3 tipos de vehículo, cada uno con
+tamaño y tarifa distintos, con restricciones de piso y un descuento
+progresivo por horas.
+
+**Entradas**: tipo de vehículo, piso(s) con disponibilidad actual,
+horas que va a permanecer (se informan al entrar).
+
+**Salidas**: si hay lugar o no, costo de la estadía, total recaudado
+en el día.
+
+--
+
+## Parking: restricciones a modelar
+
+- Motos: 1 lugar, cualquier piso.
+- Autos: 3 lugares, cualquier piso.
+- Grandes: 6 lugares, **no** entran al 3er piso, y en los pisos 1-2
+  ocupan como máximo el 50% de esos lugares (no del total del piso).
+- Descuento: 10% por cada hora después de la primera, tope 40% desde
+  la 5ta hora.
+
+--
+
+## Parking: ambigüedades para resolver en grupo
+
+- ¿El 50% de "grandes" en pisos 1-2 se calcula sobre la capacidad de
+  cada piso por separado, o sobre el conjunto de los dos pisos?
+- Si un vehículo grande pide entrar y hay lugar físico pero se supera
+  ese 50%, ¿se rechaza o espera? El enunciado no lo dice — hay que
+  decidirlo y anotarlo como supuesto.
+
+--
+
+## Parking: funciones candidatas
+
+```c
+int hay_lugar(TipoVehiculo tipo, int piso);
+// Verifica si el piso puede recibir ese tipo (capacidad + regla 50%)
+
+double calcular_tarifa(TipoVehiculo tipo, int horas);
+// Aplica tarifa base y el descuento progresivo por hora
+
+int registrar_ingreso(Vehiculo v, int piso, int horas, double *total_dia);
+// Ocupa el lugar, calcula costo, acumula al total del día
+```
+
+<p class="small">Estructura de datos sugerida: un <code>struct</code> por piso
+con ocupación por tipo, o un <code>enum TipoVehiculo</code> + contadores.
+El diagrama de flujo de la barrera lo arman en el pizarrón, en grupo.</p>
+
+---
+
+## Problema 2: Batalla naval espacial
+
+Tablero 4×4 (filas A-D, columnas 1-4). El defensor ubica una nave de 3
+partes contiguas (horizontal o vertical), cada parte con un escudo de
+1 a 9. El atacante dispara con una carga de 1 a 9, con un reactor
+total de 40 protones.
+
+**Entradas**: posición y escudos de la nave (defensor); coordenada y
+carga de cada disparo (atacante).
+
+**Salidas**: resultado de cada disparo (espacio / sin efecto /
+efectivo, neutralizado o no), y quién gana.
+
+--
+
+## Batalla naval: ambigüedades para resolver en grupo
+
+- ¿Qué pasa si el atacante dispara dos veces a una coordenada que ya
+  tiene el escudo en 0 (ya neutralizada)? ¿Gasta protones igual?
+- ¿Se permite disparar a una coordenada fuera del tablero, o afuera de
+  donde está la nave? ¿Cómo se informa el error?
+- El enunciado no dice si el atacante ve dónde está la nave — hay que
+  asumir que no (si no, el juego no tiene sentido) y anotarlo.
+
+--
+
+## Batalla naval: funciones candidatas
+
+```c
+int coordenada_valida(char fila, int col);
+// Verifica que fila esté en A-D y col en 1-4
+
+int atacar(Tablero *t, char fila, int col, int carga, int *reactor);
+// Aplica las reglas de impacto/daño, descuenta el reactor,
+// devuelve el resultado del disparo (código de espacio/sin efecto/efectivo)
+
+int juego_terminado(Tablero *t, int reactor);
+// true si la nave quedó sin escudos, o si el reactor llegó a 0
+```
+
+<p class="small">Estructura sugerida: <code>struct</code> Casillero con
+<code>ocupado</code> y <code>escudo</code>, en una matriz 4×4.</p>
+
+---
+
+## Problema 3: Inventario de librería
+
+Cada libro: código único, nombre, autor, editorial, precio, stock.
+Operaciones: agregar libro nuevo, vender, agregar stock existente,
+mostrar inventario en tabla.
+
+**Entradas**: datos de cada libro nuevo; código + cantidad en venta o
+reposición.
+
+**Salidas**: código generado al agregar, confirmación de venta (con el
+monto que se envía al sistema de costos), tabla del inventario.
+
+--
+
+## Inventario: ambigüedades para resolver en grupo
+
+- ¿Cómo se genera el código único? (correlativo, hash, lo decide el
+  grupo — pero hay que decidirlo y documentarlo)
+- ¿Qué pasa si se intenta vender más unidades de las que hay en stock?
+- El enunciado dice que el sistema de costos y ganancias "ya está
+  implementado" — no hay que diseñar esa parte, solo identificar qué
+  dato se le envía.
+
+--
+
+## Inventario: funciones candidatas
+
+```c
+int agregar_libro(Libro catalogo[], int *n, Libro nuevo);
+// Genera código único, agrega el libro, devuelve el código asignado
+
+int vender(Libro catalogo[], int n, int codigo, int cantidad);
+// Descuenta stock si alcanza, calcula ganancia de la venta
+
+void mostrar_inventario(Libro catalogo[], int n);
+// Imprime todos los libros en formato tabla
+```
+
+---
+
+## Problema 4: Prode entre amigos
+
+Apuestas por partido de la Copa América. Puntaje: 1 por ganador/empate,
++1 por acertar goles de un equipo, +1 más por resultado exacto (hasta
+4 puntos). Se acepta apostar hasta el inicio del partido; 3 horas
+después se corrobora y se suman puntos.
+
+**Entradas**: apuesta de cada jugador (resultado predicho) antes del
+inicio; resultado real del partido, 3 horas después.
+
+**Salidas**: puntaje de cada jugador, tabla final del torneo.
+
+--
+
+## Prode: ambigüedades para resolver en grupo
+
+- ¿Qué pasa si un jugador no aposta a tiempo para un partido — pierde
+  ese partido con 0 puntos, o no participa en él?
+- "3 horas después" del inicio: ¿de dónde sale el resultado real? El
+  enunciado no lo dice — asumir que llega como dato de entrada externo.
+- ¿Los 4 puntos por resultado exacto son *además* de los otros 3, o
+  *en vez de*? El enunciado dice "que se suma a los otorgados" — hay
+  que leerlo con cuidado, es la ambigüedad más sutil del problema.
+
+--
+
+## Prode: funciones candidatas
+
+```c
+int registrar_apuesta(Apuesta apuestas[], int *n, int jugador,
+                       int partido, int goles_local, int goles_visita);
+// Guarda la predicción si todavía no arrancó el partido
+
+int calcular_puntos(Apuesta a, int goles_local_real, int goles_visita_real);
+// Aplica las 3 reglas de puntaje y devuelve el total (0 a 4)
+
+void actualizar_tabla(Jugador tabla[], int n, int jugador, int puntos);
+// Suma los puntos del partido al acumulado del jugador
+```
+
+---
+
+## ¿Por qué diseñar antes de programar?
+
+Porque los errores de diseño (una regla mal entendida, un caso borde
+no contemplado) son **mucho** más baratos de corregir en un diagrama
+que reescribiendo código ya hecho.
+
+En la Parte B van a implementar el **Parking** (ejercicio 1) y la
+**Batalla naval** (ejercicio 2) en Python, y después van a reflexionar
+si este análisis previo les sirvió — o qué se les escapó.
+
+---
+
+## Recordatorio de entrega
+
+Para cada uno de los 4 problemas:
+
+- Entradas, salidas, información relevante, requerimientos y
+  restricciones identificados explícitamente
+- Algoritmo de alto nivel (diagrama de flujo u equivalente)
+- Al menos las funciones candidatas, con firma completa (nombre,
+  retorno, parámetros con tipo y nombre) y una línea de documentación
+  cada una
+
+**Criterios**: identificación correcta de entradas/salidas/
+restricciones, coherencia del algoritmo de alto nivel, funciones bien
+definidas (nombre, firma, responsabilidad clara).
+
+---
+
+## A trabajar
+
+Grupos de hasta 4 personas.
+
+Discutan primero la letra chica de cada enunciado — las ambigüedades
+son parte del ejercicio, no un defecto de la consigna.
+
+Dudas puntuales, levanten la mano.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,2458 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP2 a fondo: los 10 puntos más difíciles</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## TP2 a fondo
+### Los 10 puntos más difíciles, explicados desde cero
+
+<p class="small">Material de estudio detallado — no reemplaza la clase,
+la complementa. Pensado para leer con calma, no para proyectar rápido.</p>
+
+Note:
+Esta presentación es distinta a las anteriores del repo: acá no hay
+pistas rápidas, hay explicación completa paso a paso. Es para que
+cualquiera que recién arranca en C pueda entender de dónde sale cada
+cosa, no solo memorizar la receta.
+
+---
+
+## Por qué esta presentación existe
+
+Ya vimos, en las presentaciones anteriores, los **conceptos** y **pistas**
+para resolver el TP2 completo (Partes 1, 2 y 3).
+
+De esos temas, identificamos los **10 puntos más complejos** — los que
+más cuestan a alguien que recién empieza. Esta presentación toma esos
+10 puntos y los explica **desde cero**, con ejemplos numéricos completos
+calculados a mano, sin dar nada por sabido.
+
+---
+
+## Los 5 bloques (cubren los 10 puntos)
+
+Para no repetir explicación, agrupamos los 10 puntos en 5 bloques
+temáticos — cada bloque cubre 2 puntos relacionados:
+
+| Bloque | Puntos que cubre |
+|---|---|
+| 1. Bucles y `switch` | `do-while` vs `for`/`while` · `switch` vs `if-else` |
+| 2. Bits y binario | Operadores bitwise · Decimal → binario |
+| 3. Fechas y punteros | Parámetros de salida por puntero · Fechas con validación |
+| 4. Geometría | Triángulos (área, ángulos) · Comparación de floats |
+| 5. Recursión | Concepto general · MCD · Factorial y overflow · Palíndromo |
+
+<p class="small">Cada bloque es autocontenido: podés saltar directo al que
+te interese, no hace falta leerlos en orden.</p>
+
+
+---
+
+
+## 🔁 Bloque 1 de 5
+### Bucles y `switch`
+
+<p class="small">Puntos del top 10 que cubre este bloque: <b>do-while vs
+for/while</b> y <b>switch vs if-else</b>.</p>
+
+
+---
+
+## do-while vs for / while
+
+Un **bucle** es una instrucción que repite un bloque de código mientras se cumpla
+una condición. Existe para no tener que escribir la misma línea 10, 100 o
+1000 veces: en vez de eso, describimos **una vez** qué hay que hacer y
+**cuántas veces** (o hasta cuándo) hay que hacerlo.
+
+C tiene tres formas de escribir un bucle: `for`, `while` y `do-while`. Las
+tres pueden resolver el mismo problema, pero **no son intercambiables** — la
+diferencia está en **cuándo se evalúa la condición**.
+
+---
+
+## Anatomía de un `for`
+
+```c
+for (int i = 1; i <= 3; i++) {
+    printf("%d\n", i);
+}
+```
+
+Un `for` tiene tres partes separadas por `;`, y cada una tiene un momento
+exacto en el que se ejecuta:
+
+| Parte | Cuándo se ejecuta |
+|---|---|
+| `int i = 1;` (inicialización) | **Una sola vez**, antes de arrancar |
+| `i <= 3;` (condición) | Antes de **cada** vuelta del cuerpo |
+| `i++` (incremento) | Después de **cada** vuelta del cuerpo |
+
+--
+
+## Traza completa del `for`
+
+Sigamos el programa línea por línea, como lo haría la computadora:
+
+| Iteración | valor de `i` antes | ¿se cumple `i <= 3`? | ¿el cuerpo ejecuta? | valor de `i` después de `i++` |
+|---|---|---|---|---|
+| — (inicialización) | — | — | — | `i = 1` |
+| 1 | 1 | sí | sí → imprime `1` | 2 |
+| 2 | 2 | sí | sí → imprime `2` | 3 |
+| 3 | 3 | sí | sí → imprime `3` | 4 |
+| 4 | 4 | **no** | no ejecuta | — |
+
+<div class="answer">
+
+El bucle termina apenas la condición da **falso** — y eso pasa **antes**
+de ejecutar el cuerpo una cuarta vez. Por eso el `for` de arriba imprime
+exactamente `1`, `2`, `3` y nada más.
+
+</div>
+
+---
+
+## Anatomía de un `while`
+
+```c
+int i = 1;
+while (i <= 3) {
+    printf("%d\n", i);
+    i++;
+}
+```
+
+Es el mismo resultado que el `for` de antes, pero acá las tres partes
+(inicialización, condición, incremento) están **separadas físicamente** en
+el código en vez de ir todas juntas en el encabezado.
+
+Lo importante — y lo que comparte con `for` — es que la condición
+(`i <= 3`) se evalúa **antes** de entrar al cuerpo, en cada vuelta. Si la
+condición es falsa desde el principio, el cuerpo **no se ejecuta ni una
+sola vez**.
+
+--
+
+## Ejemplo: `while` con condición falsa desde el arranque
+
+```c
+int i = 100;
+while (i <= 10) {
+    printf("%d\n", i);
+}
+```
+
+¿Qué imprime este programa?
+
+<div class="answer">
+
+**Nada.** Ni una sola línea.
+
+Antes de ejecutar el cuerpo por primera vez, C evalúa `i <= 10`. Como
+`i` vale `100`, la condición es `100 <= 10`, que es **falsa** — así que el
+cuerpo nunca llega a ejecutarse, ni siquiera una vez.
+
+</div>
+
+---
+
+## Anatomía de un `do-while`
+
+```c
+int i = 1;
+do {
+    printf("%d\n", i);
+    i++;
+} while (i <= 3);
+```
+
+Fijate dónde está la condición: **al final**, después del cuerpo, y
+termina con `;`. Esa `;` es fácil de olvidar y el compilador tira error de
+sintaxis si falta — es una pista de que estás frente a un `do-while`.
+
+La diferencia con `for` y `while` no es solo de ubicación en el texto: es
+que acá la condición se evalúa **después** de que el cuerpo ya se ejecutó.
+Eso cambia el comportamiento en un caso concreto y muy importante.
+
+--
+
+## El mismo ejemplo, pero con `do-while`
+
+```c
+int i = 100;
+do {
+    printf("%d\n", i);
+} while (i <= 10);
+```
+
+¿Qué imprime este programa? (Compará con el `while` de la slide anterior —
+es exactamente el mismo valor inicial y la misma condición.)
+
+<div class="answer">
+
+Imprime **`100`**, una sola vez.
+
+El cuerpo (`printf("%d\n", i);`) se ejecuta **primero, sin preguntar
+nada**. Recién **después** de haberlo ejecutado, C evalúa `i <= 10`. Como
+es `100 <= 10` → falso, el bucle no vuelve a repetirse. Pero el `100` ya
+se imprimió, porque en un `do-while` el cuerpo se ejecuta **al menos una
+vez**, sin importar qué tan falsa sea la condición.
+
+</div>
+
+--
+
+## Esa es LA diferencia real
+
+<div class="answer">
+
+- `for` y `while`: preguntan **antes** de actuar. Si la respuesta es
+  "no" desde el vamos, no hacen nada.
+- `do-while`: actúan **primero** y preguntan **después**. El cuerpo se
+  ejecuta **como mínimo una vez**, pase lo que pase con la condición.
+
+No es una diferencia de estilo o de gusto — son dos comportamientos
+distintos frente al mismo dato de entrada.
+
+</div>
+
+---
+
+## ¿Cuándo usar cada uno?
+
+| Bucle | Usalo cuando... |
+|---|---|
+| `for` | Sabés de antemano **cuántas veces** hay que repetir (contar del 1 al 10, recorrer un arreglo de tamaño N) |
+| `while` | No sabés cuántas vueltas van a hacer falta, y **puede que ninguna** (por ejemplo: leer números hasta que el usuario ingrese un `-1`, si el primer número ya puede ser `-1`) |
+| `do-while` | El cuerpo **tiene que ejecutarse sí o sí, al menos una vez** — típicamente un menú ("mostrar opciones, leer elección, repetir hasta que el usuario elija salir") o una validación de entrada ("pedir un número, y si no es válido, volver a pedirlo") |
+
+<p class="small">Un menú es el ejemplo clásico de <code>do-while</code>: tenés que
+<b>mostrarlo</b> al menos una vez para que el usuario pueda elegir algo — no
+tiene sentido preguntar "¿el usuario ya eligió salir?" antes de haberle
+mostrado nunca el menú.</p>
+
+---
+
+## ⚠️ Cuidado: el bug clásico de `do-while`
+
+```c
+int i = 1;
+do {
+    printf("%d\n", i);
+} while (i <= 10);   // ⚠️ falta i++ en algún lado
+```
+
+<div class="caution">
+
+Este programa **nunca termina**. Imprime `1`, `1`, `1`, `1`... para
+siempre.
+
+¿Por qué? Porque `i` nunca cambia de valor. La condición `i <= 10` se
+evalúa una y otra vez, y como `i` sigue valiendo `1` en cada vuelta,
+**siempre** da verdadero. El programa queda "colgado" imprimiendo lo
+mismo hasta que alguien lo mate a mano (Ctrl+C en la terminal).
+
+</div>
+
+--
+
+## Por qué este bug es más fácil de cometer en `do-while`
+
+En un `for`, el incremento (`i++`) está **en el encabezado**, a la vista,
+junto con la condición — es difícil olvidarlo porque está ahí mismo,
+recordándote que existe.
+
+En un `do-while`, la variable de control se actualiza en algún lugar
+**dentro** del cuerpo, mezclada con el resto del código, y la condición
+queda **al final**, lejos de donde se actualiza la variable. Es fácil
+escribir el cuerpo, escribir la condición de corte, y olvidarse de
+conectar las dos cosas con un `i++`.
+
+<p class="small">Regla práctica: cada vez que escribas un <code>do-while</code>,
+antes de darlo por terminado, buscá con la vista "¿dónde está la línea
+que cambia la variable que aparece en el <code>while(...)</code> del
+final?". Si no la encontrás, tenés un bucle infinito.</p>
+
+---
+
+## `switch` vs `if-else` anidado
+
+Imaginemos que querés escribir un programa que, según el valor de una
+variable `char nota`, imprima a qué categoría corresponde: `'A'`, `'B'`,
+`'C'`, o cualquier otra cosa "Nota inválida".
+
+Con lo que ya sabés (`if`/`else if`), lo escribirías así:
+
+```c
+if (nota == 'A') {
+    printf("Excelente\n");
+} else if (nota == 'B') {
+    printf("Bien\n");
+} else if (nota == 'C') {
+    printf("Regular\n");
+} else {
+    printf("Nota invalida\n");
+}
+```
+
+Funciona perfecto. El problema es que **repetís `nota ==`** en cada
+rama. `switch` existe como una forma más legible de escribir exactamente
+este patrón: "comparar una misma variable contra varios valores
+constantes posibles".
+
+---
+
+## Sintaxis completa de `switch`, parte por parte
+
+```c
+switch (nota) {
+    case 'A':
+        printf("Excelente\n");
+        break;
+    case 'B':
+        printf("Bien\n");
+        break;
+    case 'C':
+        printf("Regular\n");
+        break;
+    default:
+        printf("Nota invalida\n");
+}
+```
+
+| Parte | Qué hace |
+|---|---|
+| `switch (nota)` | Evalúa la variable `nota` **una sola vez** |
+| `case 'A':` | Si `nota` es igual a `'A'`, empieza a ejecutar desde acá |
+| `break;` | Corta la ejecución del `switch` — "salí de acá" |
+| `default:` | Si `nota` no matcheó ningún `case` anterior, ejecutá esto |
+
+<p class="small"><code>default</code> es opcional, pero es buena práctica ponerlo
+siempre — es tu red de seguridad para valores que no contemplaste.</p>
+
+---
+
+## El mecanismo real del `break` (y qué pasa sin él)
+
+Es clave entender esto: `switch` **no es** una serie de "si es igual a
+esto, hacé esto y listo". `switch` es más literal que eso — es un
+**salto**. Cuando `nota` matchea un `case`, C salta a esa línea y sigue
+ejecutando **todo lo que viene después, en orden**, hasta encontrar un
+`break` o hasta que el `switch` se termine.
+
+Miremos este código **con el bug** (le sacamos el primer `break`):
+
+```c
+switch (nota) {
+    case 'A':
+        printf("Excelente\n");
+        // ⚠️ falta el break acá
+    case 'B':
+        printf("Bien\n");
+        break;
+    case 'C':
+        printf("Regular\n");
+        break;
+    default:
+        printf("Nota invalida\n");
+}
+```
+
+--
+
+## Traza línea por línea (con `nota = 'A'`)
+
+| Paso | Qué hace C |
+|---|---|
+| 1 | Evalúa `nota`, vale `'A'` |
+| 2 | Busca `case 'A':` → lo encuentra, **salta ahí** |
+| 3 | Ejecuta `printf("Excelente\n");` → imprime `Excelente` |
+| 4 | Busca un `break` en la línea siguiente... **no hay** |
+| 5 | Como no hay `break`, sigue ejecutando la instrucción siguiente **sin volver a comparar nada** — que resulta ser la del `case 'B'` |
+| 6 | Ejecuta `printf("Bien\n");` → imprime `Bien` |
+| 7 | Encuentra el `break` de `case 'B'` → sale del `switch` |
+
+<div class="caution">
+
+**⚠️ Cuidado:** con `nota = 'A'` este programa imprime **dos líneas**,
+`Excelente` y `Bien`, cuando la intención evidente era imprimir solo
+`Excelente`. Esto se llama **fall-through** ("caída hacia abajo"): al
+faltar el `break`, la ejecución "se cae" al `case` siguiente sin volver a
+preguntar si matchea. C no compara nada de nuevo — simplemente sigue
+leyendo instrucciones de arriba hacia abajo.
+
+</div>
+
+---
+
+## El fall-through también se puede usar a propósito
+
+No siempre es un bug. Cuando **varios valores deben tratarse igual**, se
+puede aprovechar el fall-through dejando `case`s "vacíos" (sin `break`,
+sin código propio) apilados uno tras otro:
+
+```c
+switch (letra) {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+        vocales++;
+        break;
+    default:
+        consonantes++;
+}
+```
+
+<div class="answer">
+
+Esto **no es un bug**. Los cuatro primeros `case` (`'a'`, `'e'`, `'i'`,
+`'o'`) no tienen código ni `break` propio — así que si `letra` es
+`'a'`, C salta ahí y "se cae" a través de `'e'`, `'i'`, `'o'`, hasta
+llegar a `case 'u':`, que sí tiene código: `vocales++; break;`. El
+resultado es que **cualquiera** de esas cinco letras ejecuta el mismo
+bloque. Es la forma idiomática de decir en C "estos casos se tratan
+igual", y ahorra repetir `vocales++;` cinco veces.
+
+</div>
+
+---
+
+## `switch` vs `if-else`: comparación honesta
+
+Con `if-else` anidado, el mismo ejemplo de las vocales se ve así:
+
+```c
+if (letra == 'a' || letra == 'e' || letra == 'i' ||
+    letra == 'o' || letra == 'u') {
+    vocales++;
+} else {
+    consonantes++;
+}
+```
+
+Mismo resultado, pero hay una diferencia de fondo, no solo de estética:
+
+| | `switch` | `if-else` |
+|---|---|---|
+| ¿Qué puede comparar? | Solo **igualdad** contra **constantes** (`case 5:`, `case 'a':`) | Cualquier expresión booleana: rangos, `>`, `<`, combinaciones con `&&`/`||` |
+| ¿Puede usar variables como caso? | No — `case variable:` no compila en C estándar | Sí, sin problema |
+| Legibilidad con muchos valores iguales | Mejor — se ve de un vistazo qué valores están cubiertos | Se vuelve una cadena larga de `||` |
+| Legibilidad con condiciones complejas (rangos, combinaciones) | No aplica — `switch` no puede expresarlo | Mejor — es para lo que `if-else` está pensado |
+
+<p class="small">Regla práctica: si estás comparando una variable contra una lista
+de valores puntuales conocidos, usá <code>switch</code>. Si necesitás evaluar
+rangos (<code>nota &gt;= 60</code>) o condiciones combinadas, <code>switch</code> no te
+sirve — ahí no hay opción, es <code>if-else</code>.</p>
+
+
+---
+
+
+## 🔢 Bloque 2 de 5
+### Bits y sistema binario
+
+<p class="small">Puntos del top 10 que cubre este bloque: <b>operadores
+bitwise (& y |)</b> y <b>conversión decimal → binario</b>.</p>
+
+
+---
+
+## Sistema binario: la base de todo
+
+Nosotros contamos en **base 10**: cada posición vale una potencia de 10
+(unidades, decenas, centenas...). La computadora, por dentro, cuenta en
+**base 2**: cada posición vale una potencia de 2, y solo puede tener
+un `0` o un `1` — eso es un **bit**.
+
+```
+Base 10:  345  =  3×100 + 4×10 + 5×1
+Base 2:   101  =  1×4   + 0×2  + 1×1   =  5
+```
+
+Todo lo que hay en la memoria de una computadora — un `int`, un `char`,
+una imagen, un archivo — es, en el fondo, una secuencia de bits.
+
+--
+
+## Tabla de potencias de 2
+
+Para pasar un número a binario a mano conviene tener memorizada (o a
+mano) esta tabla:
+
+| Posición | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|---|---|---|
+| Potencia | 2⁷ | 2⁶ | 2⁵ | 2⁴ | 2³ | 2² | 2¹ | 2⁰ |
+| Valor | 128 | 64 | 32 | 16 | 8 | 4 | 2 | 1 |
+
+<p class="small">Cada posición de un número binario "vale" uno de estos
+números si el bit ahí es <code>1</code>, y no suma nada si es
+<code>0</code>.</p>
+
+--
+
+## Ejemplo: convertir 13 a binario a mano
+
+Recorremos la tabla de potencias de mayor a menor y nos preguntamos
+"¿este número cabe?":
+
+| Potencia | 8 | 4 | 2 | 1 |
+|---|---|---|---|---|
+| ¿Cabe en 13? | Sí (13≥8) | Sí (5≥4) | No (1<2) | Sí (1≥1) |
+| Bit | 1 | 1 | 0 | 1 |
+| Resto | 13−8=5 | 5−4=1 | 1 | 1−1=0 |
+
+Leyendo la fila "Bit" de izquierda a derecha: `1101`.
+
+<div class="answer">
+
+**13 en decimal = `1101` en binario**, porque `8 + 4 + 0 + 1 = 13`.
+
+</div>
+
+---
+
+## Un `int` es una secuencia de bits
+
+En una computadora típica de hoy, un `int` ocupa **32 bits** (32
+casilleros de `0`/`1`, no solo los 4 que usamos para el 13 del
+ejemplo). El 13 en un `int` de 32 bits se ve así por dentro:
+
+```
+00000000 00000000 00000000 00001101
+```
+
+Los ceros de la izquierda no cambian el valor — es como escribir
+`013` en decimal, sigue siendo 13. Para este TP (que solo usa `&` y
+`|` sobre números positivos) no hace falta preocuparse todavía por
+cómo se representan los números **negativos** en binario — eso es
+otro tema (complemento a dos) que van a ver más adelante.
+
+---
+
+## El operador `&` (AND bit a bit)
+
+`&` compara **cada bit** de un número con el bit en la misma posición
+del otro número, y aplica esta regla:
+
+| A | B | A `&` B |
+|---|---|---|
+| 0 | 0 | 0 |
+| 0 | 1 | 0 |
+| 1 | 0 | 0 |
+| 1 | 1 | 1 |
+
+**Resultado 1 solo si los dos bits son 1.** Es exactamente la misma
+tabla que el "Y lógico", pero aplicada bit por bit en vez de a un
+valor verdadero/falso completo.
+
+--
+
+## Ejemplo completo: `12 & 10`
+
+Primero convertimos ambos a binario (8 bits, para que se vea claro) y
+los alineamos en columnas:
+
+```
+  12  =  0 0 0 0 1 1 0 0
+  10  =  0 0 0 0 1 0 1 0
+  ---------------------- &
+         0 0 0 0 1 0 0 0
+```
+
+Aplicamos la tabla de AND **columna por columna**, de izquierda a
+derecha: `0&0=0`, `0&0=0`, ... hasta llegar a las dos columnas que
+importan: `1&1=1` (quinta desde la derecha) y el resto todo `0`
+porque en algún bit uno de los dos tiene `0`.
+
+<div class="answer">
+
+`0 0 0 0 1 0 0 0` en binario es **8** en decimal.
+Entonces: `12 & 10 == 8`.
+
+</div>
+
+---
+
+## El operador `|` (OR bit a bit)
+
+Misma mecánica que `&`, pero con esta tabla:
+
+| A | B | A `\|` B |
+|---|---|---|
+| 0 | 0 | 0 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 1 |
+
+**Resultado 1 si al menos uno de los dos bits es 1.**
+
+--
+
+## Ejemplo completo: `12 | 10`
+
+Mismos números que antes, mismo alineado en columnas, ahora con OR:
+
+```
+  12  =  0 0 0 0 1 1 0 0
+  10  =  0 0 0 0 1 0 1 0
+  ---------------------- |
+         0 0 0 0 1 1 1 0
+```
+
+Columna por columna: donde **cualquiera** de los dos tiene un `1`, el
+resultado tiene `1`. Solo las columnas donde *ambos* son `0` quedan en
+`0`.
+
+<div class="answer">
+
+`0 0 0 0 1 1 1 0` en binario es **14** en decimal.
+Entonces: `12 | 10 == 14`.
+
+</div>
+
+---
+
+## ⚠️ Cuidado: `&`/`|` NO son `&&`/`||`
+
+Es el error de principiante más común de este tema. Son operadores
+**completamente distintos**, aunque se escriban parecido:
+
+| Operador | Qué hace | Opera sobre |
+|---|---|---|
+| `&` | AND **bit a bit** | cada bit del número |
+| `&&` | AND **lógico** | el valor completo (¿es 0 o no-0?) |
+| `\|` | OR **bit a bit** | cada bit del número |
+| `\|\|` | OR **lógico** | el valor completo (¿es 0 o no-0?) |
+
+<div class="caution">
+
+**⚠️ Ejemplo donde dan resultados distintos:** `5 & 2` da **0**
+(porque `101 & 010 = 000`, no comparten ningún bit en 1), pero
+`5 && 2` da **1** (verdadero), porque en C **cualquier valor
+distinto de cero cuenta como "verdadero"**, y tanto 5 como 2 son
+distintos de cero — no importa si comparten bits o no.
+
+</div>
+
+---
+
+## Mostrar un número en binario en C
+
+`printf` **no tiene** un formato estándar `%b` para binario (a
+diferencia de `%d` para decimal o `%x` para hexadecimal). Hay que
+armarlo a mano, bit por bit, usando dos operadores:
+
+- `>>` (desplazamiento a la derecha): mueve todos los bits N lugares
+  hacia la derecha, "empujando" ceros por la izquierda.
+- `&1` (máscara): al aplicar AND con `1` (que en binario es
+  `...0001`), el resultado es exactamente el último bit del número —
+  todos los demás bits se anulan porque están comparados contra `0`.
+
+**La receta:** para ver el bit que está en la posición `n`, hago
+`(numero >> n) & 1`. Eso desplaza el bit que me interesa hasta la
+última posición, y la máscara lo aísla.
+
+--
+
+## Trazando `(13 >> 3) & 1` paso a paso
+
+Recordemos: `13` en binario (8 bits) es `0 0 0 0 1 1 0 1`.
+
+**Paso 1 — desplazar 3 lugares a la derecha (`13 >> 3`):**
+
+```
+antes:   0 0 0 0 1 1 0 1
+después: 0 0 0 0 0 0 0 1     (se cayeron los 3 bits de la derecha)
+```
+
+El resultado de `13 >> 3` es `0001` en binario = **1** en decimal.
+
+**Paso 2 — aplicar la máscara (`& 1`):**
+
+```
+  0 0 0 0 0 0 0 1
+  0 0 0 0 0 0 0 1
+  ---------------- &
+  0 0 0 0 0 0 0 1
+```
+
+<div class="answer">
+
+`(13 >> 3) & 1` = **1** → el bit en la posición 3 de 13 (contando
+desde 0, de derecha a izquierda) es `1`.
+
+</div>
+
+--
+
+## Repitiendo para otras posiciones de 13
+
+Misma cuenta, para tres posiciones distintas de `13 = 00001101`:
+
+| Expresión | `13 >> n` (binario) | `& 1` | Bit en pos. `n` |
+|---|---|---|---|
+| `(13 >> 0) & 1` | `00001101` | último bit tal cual | **1** |
+| `(13 >> 1) & 1` | `00000110` | último bit ahora | **0** |
+| `(13 >> 2) & 1` | `00000011` | último bit ahora | **1** |
+| `(13 >> 3) & 1` | `00000001` | último bit ahora | **1** |
+
+Leyendo la columna "Bit" de abajo hacia arriba (posición 3, 2, 1, 0):
+`1101` — el mismo 13 con el que arrancamos.
+
+---
+
+## Código: imprimir todos los bits de un número
+
+Con la receta `(numero >> bit) & 1`, recorremos las posiciones de bit
+de la más significativa a la menos significativa (de 31 a 0, si
+tratamos el `int` completo, o menos si solo nos interesan los bits
+"útiles"):
+
+```c
+#include <stdio.h>
+
+void imprimir_binario(unsigned int n) {
+    // recorremos las posiciones de bit de izquierda a derecha
+    for (int bit = 31; bit >= 0; bit--) {
+        int valor_del_bit = (n >> bit) & 1;   // 0 o 1
+        printf("%d", valor_del_bit);
+    }
+    printf("\n");
+}
+```
+
+<p class="small">Se usa <code>unsigned int</code> (en vez de
+<code>int</code>) porque acá solo nos interesan números positivos —
+evita complicaciones con el bit de signo, que es otro tema.</p>
+
+---
+
+## División sucesiva: decimal a binario
+
+Es un algoritmo distinto al de "restar potencias de 2" que vimos al
+principio, pero llega al mismo resultado. La idea:
+
+1. Dividir el número por 2.
+2. El **resto** de esa división (0 o 1) es un dígito binario.
+3. Repetir con el **cociente**, hasta que el cociente llegue a 0.
+4. Los restos, leídos en el orden **inverso** al que se calcularon,
+   forman el número binario.
+
+--
+
+## Por qué funciona: conectando con lo que ya vimos
+
+Dividir un número por 2 y mirar el resto es **exactamente lo mismo**
+que mirar el último bit con `& 1` de la slide anterior: el resto de
+dividir por 2 solo puede ser 0 o 1, y ese es el bit menos
+significativo (el de más a la derecha) del número.
+
+<div class="answer">
+
+Dividir por 2 sucesivamente = ir leyendo los bits del número de
+**derecha a izquierda**, uno por división. Por eso el primer resto
+que se calcula es el **último** bit que hay que mostrar.
+
+</div>
+
+---
+
+## Ejemplo completo: 25 en binario
+
+Aplicamos el algoritmo paso a paso hasta que el cociente da 0:
+
+| Paso | División | Cociente | Resto |
+|---|---|---|---|
+| 1 | 25 ÷ 2 | 12 | **1** |
+| 2 | 12 ÷ 2 | 6 | **0** |
+| 3 | 6 ÷ 2 | 3 | **0** |
+| 4 | 3 ÷ 2 | 1 | **1** |
+| 5 | 1 ÷ 2 | 0 | **1** |
+
+Los restos, en el orden en que se calcularon (de arriba hacia abajo),
+son: `1, 0, 0, 1, 1`.
+
+<div class="answer">
+
+Leyendo los restos **al revés** (de abajo hacia arriba, del último
+paso al primero): `1 1 0 0 1` → **25 en decimal = `11001` en binario**.
+
+</div>
+
+---
+
+## ⚠️ Cuidado: el orden invertido es LA trampa de este ejercicio
+
+<div class="caution">
+
+Si programás el algoritmo tal cual (dividir, imprimir el resto,
+repetir), el programa imprime los dígitos en el orden en que los
+calculó: `1 0 0 1 1` — que es el binario **al revés**, y es un número
+distinto (`11001` ≠ `10011`). El primer resto calculado es el bit
+**menos significativo** (el de más a la derecha), no el primero que
+hay que mostrar.
+
+</div>
+
+Hay dos formas correctas de resolverlo: guardar los restos y
+recorrerlos al revés, o usar recursión.
+
+---
+
+## Solución 1: guardar los restos en un arreglo
+
+Guardamos cada resto en un arreglo a medida que lo calculamos, y
+después recorremos el arreglo **de atrás para adelante** al imprimir:
+
+```c
+void decimal_a_binario(int decimal) {
+    int restos[32];   // suficiente para un int de 32 bits
+    int cantidad = 0;
+
+    // 1) calculamos los restos en orden normal (de derecha a izquierda)
+    if (decimal == 0) {
+        printf("0\n");
+        return;
+    }
+    while (decimal > 0) {
+        restos[cantidad] = decimal % 2;   // el resto de dividir por 2
+        decimal = decimal / 2;             // seguimos con el cociente
+        cantidad++;
+    }
+
+    // 2) imprimimos el arreglo AL REVÉS: del último resto guardado
+    //    (que es el bit más significativo) al primero
+    for (int i = cantidad - 1; i >= 0; i--) {
+        printf("%d", restos[i]);
+    }
+    printf("\n");
+}
+```
+
+---
+
+## Solución 2: recursión — invertir el orden "gratis"
+
+La otra forma es dejar que la recursión invierta el orden por
+nosotros. La clave está en **dónde** ponemos el `printf`:
+
+```c
+void mostrar_binario_recursivo(int decimal) {
+    if (decimal == 0) {
+        return;                              // caso base: no hay más bits
+    }
+    mostrar_binario_recursivo(decimal / 2);  // primero, seguir dividiendo
+    printf("%d", decimal % 2);               // recién DESPUÉS, imprimir
+}
+```
+
+Notá que el `printf` está **después** de la llamada recursiva, no
+antes. Esa es la diferencia que hace que el orden salga bien.
+
+--
+
+## Trazando la recursión para 6 (`110` en binario)
+
+Cada llamada primero se "cuelga" esperando a la siguiente, hasta
+llegar al caso base — y ahí recién empiezan a imprimir, en orden
+inverso a como se llamaron:
+
+```
+mostrar_binario_recursivo(6)
+  → llama a mostrar_binario_recursivo(3)     [6/2=3]  (todavía no imprimió nada)
+      → llama a mostrar_binario_recursivo(1) [3/2=1]  (todavía no imprimió nada)
+          → llama a mostrar_binario_recursivo(0) [1/2=0]
+              → caso base, decimal==0, return (no imprime nada)
+          ← vuelve acá: imprime 1 % 2 = "1"
+      ← vuelve acá: imprime 3 % 2 = "1"
+  ← vuelve acá: imprime 6 % 2 = "0"
+```
+
+<div class="answer">
+
+Orden real de impresión: primero "1" (de la llamada más profunda que
+volvió), después "1", después "0" → se imprime **"110"**, que es
+exactamente 6 en binario, sin necesidad de arreglo ni de invertir
+nada a mano.
+
+</div>
+
+--
+
+## Por qué la recursión invierte el orden
+
+Cada llamada a `mostrar_binario_recursivo` **pausa** en la línea de la
+llamada recursiva y espera a que esa llamada termine antes de seguir
+con su propio `printf`. La primera llamada en pausarse (`6`) es la
+**última** en imprimir su dígito, porque tiene que esperar a que
+*todas* las llamadas que hizo (3, luego 1, luego 0) terminen primero.
+Por eso el dígito más significativo (el de `6`, calculado primero)
+termina imprimiéndose último — que es exactamente el orden correcto.
+
+---
+
+## Comparando las dos versiones
+
+| | Con arreglo (iterativa) | Con recursión |
+|---|---|---|
+| Necesita arreglo auxiliar | Sí | No |
+| Dónde se "guarda" el orden | En el arreglo, explícitamente | En la pila de llamadas, implícitamente |
+| Dificultad de leer el código | Más directo de seguir | Exige entender bien el orden de ejecución |
+| Qué pide el enunciado del TP | Obligatoria (`decimal_a_binario`) | Opcional (`mostrar_binario_recursivo`) |
+
+<p class="small">Ambas versiones son válidas y dan el mismo resultado
+— la diferencia es dónde "vive" la información del orden: en memoria
+explícita (el arreglo) o en la pila de llamadas de la recursión.</p>
+
+
+---
+
+
+## 📅 Bloque 3 de 5
+### Fechas y punteros
+
+<p class="small">Puntos del top 10 que cubre este bloque: <b>parámetros de
+salida por puntero</b> (primer contacto con punteros) y <b>fechas con
+validación</b>.</p>
+
+
+---
+
+## El problema: una función que necesita devolver 3 valores
+
+En C, una función solo puede hacer **un** `return`:
+
+```c
+int cuadrado(int x) {
+    return x * x;   // un solo valor
+}
+```
+
+Pero `fecha_anterior` necesita devolver **tres** cosas a la vez: el
+día, el mes y el año de la fecha anterior. `return` no alcanza.
+
+<p class="small">¿Cómo hace una función en C para "devolver" más de un
+valor? Esa es la pregunta que vamos a responder en las próximas
+slides — y la respuesta son los <b>punteros</b>.</p>
+
+---
+
+## Qué es una variable en memoria
+
+Toda variable vive en algún lugar de la memoria de la computadora.
+Ese lugar tiene una **dirección** (como una calle y un número de
+puerta) y un **contenido** (lo que hay guardado ahí).
+
+```c
+int dia = 15;
+```
+
+| Dirección | Contenido |
+|---|---|
+| `0x1000` | `15` |
+
+<p class="small">La dirección <code>0x1000</code> es inventada para el
+ejemplo — en la realidad la elige el sistema operativo cuando corre el
+programa, y casi nunca es un número "lindo". Lo importante es la
+<b>idea</b>: cada variable tiene una dirección.</p>
+
+--
+
+## La variable tiene un nombre para que no tengamos que pensar en la dirección
+
+Nosotros escribimos `dia` y el compilador se encarga de traducir eso a
+"la dirección `0x1000`" por detrás. Normalmente ni pensamos en que esa
+dirección existe.
+
+Pero **existe**, y en unas slides más vamos a necesitar usarla
+directamente.
+
+---
+
+## El operador `&` — "dirección de"
+
+`&dia` **no es el valor de `dia`** (no es `15`). Es la dirección donde
+vive `dia` en memoria.
+
+```c
+int dia = 15;
+printf("%d\n", dia);    // imprime 15        (el contenido)
+printf("%p\n", &dia);   // imprime 0x1000     (la dirección)
+```
+
+| Expresión | Qué significa | Resultado en el ejemplo |
+|---|---|---|
+| `dia` | el contenido de la caja | `15` |
+| `&dia` | la dirección de la caja | `0x1000` |
+
+<div class="caution">
+
+**⚠️ Cuidado:** `dia` y `&dia` son dos cosas completamente distintas.
+`dia` es un `int`. `&dia` es "la dirección de un `int`" — un tipo de
+dato diferente (más adelante lo vamos a llamar `int *`).
+
+</div>
+
+---
+
+## Qué es un puntero
+
+Un **puntero** es una variable que, en vez de guardar un número o un
+carácter, guarda **una dirección de memoria** — la dirección de otra
+variable.
+
+```c
+int  dia = 15;   // una variable común: guarda un número
+int *p;          // un puntero: va a guardar una dirección
+p = &dia;        // p ahora "apunta a" dia
+```
+
+`int *p;` se lee: "`p` es un puntero a `int`" — es decir, `p` va a
+guardar la dirección de una variable de tipo `int`.
+
+--
+
+## El diagrama de memoria completo
+
+Después de `p = &dia;`, hay **dos** cajas en memoria: la de `dia` y la
+de `p`. La de `p` no contiene un `15` — contiene la dirección de `dia`.
+
+| Variable | Dirección | Contenido |
+|---|---|---|
+| `dia` | `0x1000` | `15` |
+| `p` | `0x2000` | `0x1000` |
+
+<p class="small">La caja de <code>p</code> vive en su propia dirección
+(<code>0x2000</code>), pero lo que <b>guarda adentro</b> es la
+dirección de <code>dia</code> (<code>0x1000</code>). Un puntero
+"apunta a" otra caja dibujando una flecha desde su contenido hacia esa
+otra dirección.</p>
+
+---
+
+## El operador `*` — "desreferencia"
+
+Si `p` guarda la dirección de `dia`, ¿cómo llegamos al contenido de
+`dia` **a través de** `p`? Con `*p`.
+
+`*p` significa: "andá a la dirección que `p` tiene guardada, y traeme
+(o modificá) el contenido que hay ahí".
+
+```c
+int  dia = 15;
+int *p = &dia;
+
+printf("%d\n", *p);   // imprime 15 — el contenido de dia, vía p
+```
+
+--
+
+## Modificar a través de un puntero
+
+Lo interesante es que `*p` también se puede usar para **escribir**,
+no solo para leer:
+
+```c
+int  dia = 15;
+int *p = &dia;
+
+*p = 20;              // "andá a donde apunta p, y poné 20 ahí"
+printf("%d\n", dia);  // imprime 20 — ¡dia cambió, y no lo tocamos por su nombre!
+```
+
+| Variable | Dirección | Contenido antes | Contenido después de `*p = 20;` |
+|---|---|---|---|
+| `dia` | `0x1000` | `15` | `20` |
+| `p` | `0x2000` | `0x1000` | `0x1000` (no cambió) |
+
+<div class="answer">
+
+**La idea clave:** `*p = 20;` no cambia `p` — cambia lo que hay en la
+dirección a la que `p` apunta. `p` sigue apuntando al mismo lugar.
+
+</div>
+
+---
+
+## Por qué esto resuelve el problema del principio
+
+Una función puede recibir **punteros** como parámetros. Si adentro
+escribe con `*`, está modificando directamente las variables de quien
+la llamó — aunque la función sea `void` y no haga ningún `return`.
+
+```c
+void fecha_anterior(int dia, int mes, int anio,
+                     int *d, int *m, int *a) {
+    // ... calcula la fecha anterior ...
+    *d = dia_calculado;
+    *m = mes_calculado;
+    *a = anio_calculado;
+}
+```
+
+`d`, `m`, `a` son punteros a `int`: direcciones donde la función va a
+**escribir** sus tres resultados.
+
+--
+
+## Cómo se llama a esta función desde `main`
+
+```c
+int d, m, a;   // acá van a quedar los resultados
+
+fecha_anterior(15, 3, 2026, &d, &m, &a);
+
+printf("%d/%d/%d\n", d, m, a);   // 14/3/2026
+```
+
+Le pasamos `&d`, `&m`, `&a` — las **direcciones** de nuestras
+variables `d`, `m`, `a` — para que la función pueda escribir ahí
+adentro.
+
+---
+
+## ⚠️ Cuidado: el error más común de este tema
+
+¿Qué pasa si, por apuro, llamamos a la función pasando `d` en vez de
+`&d`?
+
+```c
+int d, m, a;
+fecha_anterior(15, 3, 2026, d, m, a);   // ¡FALTA el &!
+printf("%d/%d/%d\n", d, m, a);          // basura / no compila bien
+```
+
+<div class="caution">
+
+**⚠️ Sin el `&`, la función recibe una COPIA del valor de `d`** (que
+todavía ni fue inicializado), no su dirección. Todo lo que la función
+escriba con `*d = ...` adentro se pierde apenas la función termina —
+porque estaba escribiendo en una copia local, no en la variable `d`
+del `main`. Este tipo de error muchas veces ni siquiera compila
+(el compilador espera un `int *` y le dieron un `int`), y si compila,
+el resultado es basura.
+
+</div>
+
+--
+
+## Por qué pasa esto: dos cajas separadas
+
+```
+main:              d = 15  (dirección 0x3000)
+
+Llamada SIN &:     fecha_anterior(..., d, ...)
+                    ↓ copia el VALOR 15 a un parámetro local
+
+Dentro de la función:  d_local = 15  (dirección 0x9000, OTRA caja)
+                        d_local = 14;   // modifica 0x9000
+
+main después:      d sigue valiendo 15  (0x3000 nunca se tocó)
+```
+
+<p class="small">Con <code>&d</code>, en cambio, lo que se copia al
+parámetro es la <b>dirección</b> <code>0x3000</code> — así que
+<code>*d = 14;</code> adentro de la función escribe directamente en la
+caja del <code>main</code>.</p>
+
+---
+
+## Trazando una llamada completa, paso a paso
+
+```c
+void fecha_anterior(int dia, int mes, int anio,
+                     int *d, int *m, int *a) {
+    if (dia > 1) {
+        *d = dia - 1;
+        *m = mes;
+        *a = anio;
+    }
+    // (el caso dia == 1 se ve más adelante)
+}
+```
+
+Llamada: `fecha_anterior(15, 3, 2026, &d, &m, &a);`
+
+--
+
+## Paso a paso — dentro de la función
+
+| Paso | Qué pasa | Estado |
+|---|---|---|
+| 1 | `dia=15, mes=3, anio=2026` llegan como copias (por valor) | parámetros locales |
+| 2 | `d, m, a` llegan como **direcciones** de las variables del `main` | apuntan a `0x3000, 0x3004, 0x3008` (inventadas) |
+| 3 | `dia > 1` es verdadero (15 > 1) | entra al `if` |
+| 4 | `*d = dia - 1;` → `*d = 14;` | escribe `14` en `0x3000` |
+| 5 | `*m = mes;` → `*m = 3;` | escribe `3` en `0x3004` |
+| 6 | `*a = anio;` → `*a = 2026;` | escribe `2026` en `0x3008` |
+
+--
+
+## Paso a paso — de vuelta en `main`
+
+```c
+int d, m, a;
+fecha_anterior(15, 3, 2026, &d, &m, &a);
+printf("%d/%d/%d\n", d, m, a);   // 14/3/2026
+```
+
+La función terminó, pero como escribió **directamente** en las cajas
+de `d`, `m` y `a` (no en copias), esos valores quedaron:
+
+| Variable | Contenido final |
+|---|---|
+| `d` | `14` |
+| `m` | `3` |
+| `a` | `2026` |
+
+<div class="answer">
+
+Este es el mecanismo completo: parámetros normales entran **por
+valor** (copias), parámetros puntero permiten **escribir hacia
+afuera** de la función.
+
+</div>
+
+---
+
+## Ahora sí: la lógica de fechas — año bisiesto
+
+**Regla:** un año es bisiesto si es divisible por 4 **Y** (no es
+divisible por 100 **O** es divisible por 400).
+
+```c
+int es_bisiesto(int anio) {
+    return (anio % 4 == 0 && (anio % 100 != 0 || anio % 400 == 0));
+}
+```
+
+| Año | ÷4 | ÷100 | ÷400 | ¿Bisiesto? |
+|---|---|---|---|---|
+| 2024 | sí | no | — | **sí** (÷4 y no ÷100) |
+| 2100 | sí | sí | no | **no** (÷100 y no ÷400) |
+| 2000 | sí | sí | sí | **sí** (÷100 pero también ÷400) |
+
+--
+
+## ⚠️ Cuidado: "divisible por 4" solo, no alcanza
+
+<div class="caution">
+
+Si la regla fuera solo `anio % 4 == 0`, el año **2100** se
+clasificaría como bisiesto (2100 ÷ 4 = 525, exacto) — pero **2100 NO
+es bisiesto** en el calendario real, porque es divisible por 100 y no
+por 400. Sin la condición completa, `dias_del_mes(2, 2100)` daría 29
+en vez de 28, y todo el cálculo de fechas de ese año quedaría corrido.
+
+</div>
+
+<p class="small">Regla mnemotécnica: "cada 4 años es bisiesto, salvo
+los años de siglo (÷100), salvo que además sean ÷400". 2000 es la
+excepción de la excepción.</p>
+
+---
+
+## Días del mes
+
+```c
+int dias_del_mes(int mes, int anio) {
+    int dias[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (mes == 2 && es_bisiesto(anio)) {
+        return 29;
+    }
+    return dias[mes - 1];   // mes 1 = enero → índice 0
+}
+```
+
+<p class="small"><code>mes - 1</code> porque los meses van de 1 a 12,
+pero los índices del arreglo van de 0 a 11 — otra trampa clásica de
+principiante (<i>off-by-one</i>).</p>
+
+---
+
+## Casos de borde: cuando el día cambia de mes
+
+Cuando el día es **1**, el día anterior no es "día 0" — es el
+**último día del mes anterior**. Y si el mes era enero, el mes
+anterior es diciembre del **año anterior**.
+
+**Ejemplo trazado: 1 de marzo de 2026 → día anterior**
+
+| Paso | Resultado |
+|---|---|
+| día = 1, así que no es simplemente `dia - 1` | hay que cambiar de mes |
+| mes anterior a marzo (3) es febrero (2) | `mes = 2` |
+| 2026 no es bisiesto (2026%4 ≠ 0) → febrero tiene 28 días | `dia = 28` |
+| el año no cambia (seguimos en 2026) | `anio = 2026` |
+| **Resultado** | **28 de febrero de 2026** |
+
+--
+
+## Casos de borde: cuando el día cambia de año
+
+**Ejemplo trazado: 31 de diciembre de 2026 → día posterior**
+
+| Paso | Resultado |
+|---|---|
+| día = 31 = último día de diciembre | hay que cambiar de mes |
+| mes posterior a diciembre (12) es enero (1) | `mes = 1` |
+| enero siempre tiene 31 días, pero acá empieza de nuevo | `dia = 1` |
+| diciembre es el último mes → el año se incrementa | `anio = 2027` |
+| **Resultado** | **1 de enero de 2027** |
+
+--
+
+## Un caso con bisiesto
+
+**Ejemplo trazado: 28 de febrero de 2024 → día posterior**
+
+2024 **sí** es bisiesto (÷4 y no ÷100), así que febrero tiene **29**
+días ese año — el 28 de febrero **no** es el último día del mes.
+
+| Paso | Resultado |
+|---|---|
+| `dias_del_mes(2, 2024)` devuelve 29 | 28 ≠ 29, no es el último día |
+| como no es el último día, simplemente sumamos 1 | `dia = 29` |
+| mes y año no cambian | `mes = 2, anio = 2024` |
+| **Resultado** | **29 de febrero de 2024** |
+
+<div class="caution">
+
+**⚠️ Cuidado:** si no se usa `es_bisiesto` acá, el programa saltaría
+directo al 1 de marzo y se saltearía el 29 de febrero — un bug que
+solo aparece en años bisiestos, muy fácil de no detectar si solo se
+prueba con años comunes.
+
+</div>
+
+---
+
+## Días restantes hasta fin de mes
+
+```c
+int dias_restantes_mes(int dia, int mes, int anio) {
+    return dias_del_mes(mes, anio) - dia;
+}
+```
+
+Si hoy es el 20 de abril (abril tiene 30 días), quedan
+`30 - 20 = 10` días para terminar el mes.
+
+---
+
+## Código completo: `es_bisiesto` y `dias_del_mes`
+
+```c
+int es_bisiesto(int anio) {
+    return (anio % 4 == 0 && (anio % 100 != 0 || anio % 400 == 0));
+}
+
+int dias_del_mes(int mes, int anio) {
+    int dias[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (mes == 2 && es_bisiesto(anio)) {
+        return 29;
+    }
+    return dias[mes - 1];
+}
+```
+
+---
+
+## Esqueleto completo: `fecha_posterior`
+
+```c
+void fecha_posterior(int dia, int mes, int anio,
+                      int *d, int *m, int *a) {
+    if (dia < dias_del_mes(mes, anio)) {
+        // caso simple: no cambia de mes
+        *d = dia + 1;
+        *m = mes;
+        *a = anio;
+    } else {
+        // último día del mes: pasa al día 1 del mes siguiente
+        *d = 1;
+        if (mes == 12) {
+            *m = 1;
+            *a = anio + 1;   // también cambia el año
+        } else {
+            *m = mes + 1;
+            *a = anio;
+        }
+    }
+}
+```
+
+<p class="small"><code>fecha_anterior</code> se arma con la misma
+lógica pero "hacia atrás": si <code>dia &gt; 1</code>, restar 1; si
+no, ir al último día del mes anterior (y si el mes era enero, también
+retroceder el año).</p>
+
+
+---
+
+
+## 📐 Bloque 4 de 5
+### Geometría computacional
+
+<p class="small">Puntos del top 10 que cubre este bloque: <b>área y
+ángulos de un triángulo</b> y <b>comparación de floats con tolerancia</b>.</p>
+
+
+---
+
+## Geometría computacional: el problema
+
+Dados los 3 vértices de un triángulo — `(x1,y1)`, `(x2,y2)`, `(x3,y3)` —
+tenemos que calcular, con código C:
+
+- Su **área**
+- Sus **3 ángulos internos**
+- Verificar que los ángulos sumen (aproximadamente) `180°`
+
+Vamos a resolverlo con un ejemplo concreto: el triángulo con vértices
+`(0,0)`, `(4,0)`, `(0,3)`. Es un triángulo rectángulo elegido a propósito
+— los números van a dar redondos y va a ser fácil verificar cada cuenta
+a mano.
+
+--
+
+## Por qué este ejercicio es el más denso del TP2
+
+No es difícil por tener mucho código. Es difícil porque mezcla:
+
+- Una fórmula geométrica poco intuitiva (área por coordenadas)
+- Trigonometría (Ley de Cosenos)
+- Una función de `math.h` que devuelve un resultado en una **unidad
+  que no esperamos** (radianes, no grados)
+- Una trampa clásica de punto flotante (comparar con `==`)
+
+Vamos tema por tema. La idea es que al final entiendas **de dónde sale**
+cada fórmula, no que la memorices.
+
+---
+
+## Paso 1: el área por coordenadas
+
+La fórmula que vamos a usar (método del "shoelace" o "cordón de zapato",
+por la forma en que se cruzan los términos):
+
+`Área = ½ · |x1·(y2−y3) + x2·(y3−y1) + x3·(y1−y2)|`
+
+Parece salida de la nada. No lo es: viene de sumar y restar áreas de
+trapecios bajo cada lado del triángulo, pero **para este TP no hace
+falta demostrarla** — lo que sí hace falta es saber *usarla* bien,
+término por término, sin equivocar el orden de los subíndices.
+
+--
+
+## Aplicándola a nuestro triángulo
+
+Vértices: `(x1,y1)=(0,0)`, `(x2,y2)=(4,0)`, `(x3,y3)=(0,3)`
+
+Reemplazamos, un término a la vez:
+
+```
+x1·(y2−y3) = 0 · (0−3)  = 0 · (−3) = 0
+x2·(y3−y1) = 4 · (3−0)  = 4 · 3    = 12
+x3·(y1−y2) = 0 · (0−0)  = 0 · 0    = 0
+```
+
+Sumamos los tres términos: `0 + 12 + 0 = 12`
+
+Aplicamos el `½` y el valor absoluto:
+
+`Área = ½ · |12| = ½ · 12 = 6`
+
+<div class="answer">
+
+**Área = 6.** Se puede verificar por fuera de la fórmula: es un
+triángulo rectángulo con catetos 4 y 3, y el área de un triángulo
+rectángulo es `(base × altura) / 2 = (4 × 3) / 2 = 6`. Coincide.
+
+</div>
+
+--
+
+## ¿Por qué el valor absoluto?
+
+Si reemplazás los vértices en **otro orden** (por ejemplo, dando la
+vuelta al triángulo en sentido contrario), la cuenta de adentro de las
+barras `| |` puede dar **negativa** en vez de positiva — por ejemplo
+`-12` en vez de `12`.
+
+Esto pasa porque la fórmula, sin el valor absoluto, en realidad calcula
+un área "con signo": positiva si los vértices se recorren en un
+sentido (antihorario) y negativa si se recorren en el otro (horario).
+Un área física nunca es negativa, así que el `| |` (y la función
+`fabs()` en C) se encarga de descartar ese signo y quedarnos solo con
+la magnitud.
+
+<div class="caution">
+
+**⚠️ Cuidado:** si te olvidás el `fabs()` en el código, el programa va a
+"andar" para un orden de vértices y va a dar área negativa para el
+otro — un bug que solo aparece según cómo el usuario ingresa los
+puntos.
+
+</div>
+
+---
+
+## Paso 2: distancia entre dos puntos
+
+Antes de poder calcular ángulos, necesitamos saber cuánto mide cada
+lado del triángulo. Para eso usamos la **distancia euclidiana** entre
+dos puntos:
+
+`d = sqrt((x2−x1)² + (y2−y1)²)`
+
+Esto no es una fórmula nueva — es el **Teorema de Pitágoras** disfrazado.
+
+--
+
+## De Pitágoras a la fórmula de distancia
+
+Pensá dos puntos cualquiera en un plano. La diferencia entre sus
+coordenadas `x` (`x2−x1`) y la diferencia entre sus coordenadas `y`
+(`y2−y1`) forman los dos **catetos** de un triángulo rectángulo
+imaginario. La distancia entre los puntos originales es la
+**hipotenusa** de ese triángulo:
+
+```
+        (x2,y2)
+           |\
+           | \
+  (y2-y1)  |  \  d = distancia buscada
+           |   \
+           |____\
+  (x1,y1)  (x2-x1)  (x2,y1)
+```
+
+Y el Teorema de Pitágoras dice: `hipotenusa² = cateto1² + cateto2²`,
+o sea `d² = (x2−x1)² + (y2−y1)²`. Despejando `d`, sacamos raíz
+cuadrada a ambos lados — de ahí el `sqrt()`.
+
+--
+
+## Calculando los 3 lados de nuestro triángulo
+
+Vértices: `A=(0,0)`, `B=(4,0)`, `C=(0,3)`
+
+```
+lado AB = sqrt((4-0)² + (0-0)²) = sqrt(16 + 0)  = sqrt(16) = 4
+lado AC = sqrt((0-0)² + (3-0)²) = sqrt(0 + 9)   = sqrt(9)  = 3
+lado BC = sqrt((0-4)² + (3-0)²) = sqrt(16 + 9)  = sqrt(25) = 5
+```
+
+<div class="answer">
+
+**Los tres lados dan 3, 4 y 5** — un triángulo "3-4-5", el ejemplo
+clásico de triángulo rectángulo con lados enteros. Lo elegimos a
+propósito para que las cuentas de los pasos siguientes también den
+números redondos y se puedan verificar a mano.
+
+</div>
+
+---
+
+## Paso 3: encontrar un ángulo con la Ley de Cosenos
+
+Ya tenemos los 3 lados. Pero el ejercicio pide los **3 ángulos**
+internos. Con solo los lados (sin transportador ni coordenadas de
+ángulos), ¿cómo se calcula un ángulo?
+
+Con la **Ley de Cosenos**:
+
+`cos(C) = (a² + b² − c²) / (2·a·b)`
+
+Donde `C` es el ángulo que se quiere encontrar, y `c` es el lado
+**opuesto** a ese ángulo (el lado que "no toca" el vértice del ángulo
+C). `a` y `b` son los otros dos lados.
+
+--
+
+## ¿Cuál lado es "opuesto" a cuál ángulo?
+
+```
+            C
+           /|
+          / |
+       b /  | a
+        /   |
+       /____|
+      A  c   B
+```
+
+El ángulo `C` está en el vértice de arriba. El lado que queda
+"enfrente" de ese vértice, sin tocarlo, es `c` (el de abajo). Los
+lados `a` y `b` sí tocan el vértice `C` — son los que "forman" el
+ángulo.
+
+Esta es la parte donde más se equivocan al programar: hay que tener
+mucho cuidado de que, al calcular el ángulo en el vértice `B`, el lado
+que se usa como "`c`" en la fórmula sea el lado `AC` (el opuesto a
+`B`), y no cualquier otro.
+
+--
+
+## Aplicándola: el ángulo recto de nuestro triángulo
+
+Nuestro triángulo tiene lados `3`, `4` y `5`. Sabemos (porque lo
+dibujamos así) que el ángulo recto está en el vértice donde se juntan
+los catetos 3 y 4 — o sea, el ángulo **opuesto al lado 5**.
+
+Usamos la fórmula con `a=3`, `b=4`, `c=5` (el opuesto al ángulo que
+buscamos):
+
+```
+cos(C) = (3² + 4² - 5²) / (2 · 3 · 4)
+       = (9 + 16 - 25) / 24
+       = 0 / 24
+       = 0
+```
+
+<div class="answer">
+
+**`cos(C) = 0`.** Y el ángulo cuyo coseno es 0 es exactamente **90°**
+— el ángulo recto. Tiene sentido: `a² + b² - c²` es 0 precisamente
+porque `a² + b² = c²`, que es el propio Teorema de Pitágoras. La Ley
+de Cosenos **generaliza** Pitágoras: cuando el ángulo es recto, se
+reduce exactamente a la fórmula que ya conocías.
+
+</div>
+
+---
+
+## Paso 4: `acos()` devuelve radianes, no grados
+
+Ya sabemos que `cos(C) = 0`. En C, para "deshacer" el coseno y obtener
+el ángulo, se usa `acos()` (arco-coseno):
+
+```c
+double C = acos(0.0);
+```
+
+Pero acá aparece la trampa: **`acos()` no devuelve grados**. Devuelve
+**radianes**. Si imprimís `C` directamente esperando ver `90`, vas a
+ver `1.5708` — y eso está *bien*, solo que en otra unidad.
+
+--
+
+## ¿Qué es un radián?
+
+Un radián es el ángulo que "abarca" un arco de circunferencia cuya
+longitud es igual al radio de esa circunferencia. No hace falta más
+que esta idea para seguir: lo importante es la equivalencia entre las
+dos unidades.
+
+Una vuelta completa (360°) mide, en radianes, `2·π` — donde `π ≈
+3.14159`. Entonces:
+
+```
+360°       = 2π  radianes  ≈ 6.2832 radianes
+180°       = π   radianes  ≈ 3.1416 radianes
+90°        = π/2 radianes  ≈ 1.5708 radianes
+```
+
+Todas las funciones trigonométricas de `math.h` (`sin`, `cos`, `tan`,
+`asin`, `acos`, `atan`) trabajan **siempre en radianes** — es una
+convención de la biblioteca matemática, no algo particular de este
+ejercicio.
+
+--
+
+## La conversión: de radianes a grados
+
+Como `π` radianes equivalen a `180°`, la regla de tres da:
+
+`grados = radianes × 180 / π`
+
+Aplicado a nuestro resultado: `acos(0.0)` devolvió `π/2` radianes
+(≈1.5708). Convertimos:
+
+```
+grados = 1.5708 × 180 / 3.14159
+       = 1.5708 × 57.2958
+       ≈ 90.0
+```
+
+<div class="answer">
+
+**90°**, como esperábamos para el ángulo recto de nuestro triángulo
+3-4-5. En C, la conversión se escribe así (usando la constante
+`M_PI` de `math.h`, o escribiendo `3.14159265358979` a mano si el
+compilador no la reconoce):
+
+```c
+double grados = C * 180.0 / M_PI;
+```
+
+</div>
+
+---
+
+## Paso 5: por qué NO hay que comparar floats con `==`
+
+El ejercicio pide validar que los 3 ángulos sumen aproximadamente
+`180°`. La tentación natural es escribir:
+
+```c
+if (angulo1 + angulo2 + angulo3 == 180.0) {
+    printf("Triangulo valido\n");
+}
+```
+
+Este código **casi nunca** va a imprimir el mensaje, aunque el
+triángulo esté perfectamente bien calculado. ¿Por qué?
+
+--
+
+## La raíz del problema: precisión finita
+
+Las computadoras representan los números `double` en **binario**, con
+una cantidad **finita** de dígitos. Muchos números que en base 10 se
+escriben "limpios" (como `0.1`, o el resultado de una división) no
+tienen una representación exacta en binario — igual que `1/3` no
+tiene una representación decimal exacta (`0.3333...`, infinita).
+
+Cuando encadenás varias operaciones — `sqrt()`, `acos()`, divisiones,
+multiplicaciones — cada una arrastra un pequeñísimo error de
+redondeo. Al sumar los 3 ángulos, esos errores se **acumulan**. El
+resultado real que calcula la computadora puede terminar siendo, por
+ejemplo:
+
+```
+179.99999997134  (en vez de 180.0 exacto)
+```
+
+Para el ojo humano es "180". Para el operador `==`, que compara
+bit a bit, **no son el mismo número** — y la condición da falsa.
+
+--
+
+## La solución: comparar con una tolerancia (epsilon)
+
+En vez de pedir igualdad exacta, se pide que la diferencia entre el
+resultado y el valor esperado sea **muy chica** — más chica que un
+margen de error aceptable (llamado comúnmente "epsilon" o
+"tolerancia"):
+
+```c
+// MAL: casi nunca es verdadero, por el error de redondeo
+if (angulo1 + angulo2 + angulo3 == 180.0) { ... }
+
+// BIEN: compara con tolerancia
+double suma = angulo1 + angulo2 + angulo3;
+if (fabs(suma - 180.0) < 0.01) {
+    printf("Triangulo valido (suma = %.6f)\n", suma);
+}
+```
+
+`fabs()` (de `math.h`) devuelve el **valor absoluto** de un `double` —
+la "distancia" entre `suma` y `180.0`, sin importar si `suma` quedó un
+poquito arriba o un poquito abajo de 180. Si esa distancia es menor a
+`0.01`, lo consideramos "prácticamente 180°".
+
+<div class="caution">
+
+**⚠️ Cuidado:** esta regla — nunca comparar `float`/`double` con `==`,
+usar `fabs(a - b) < epsilon` en su lugar — no es exclusiva de este
+ejercicio. Aplica **cada vez** que compares números de punto flotante
+en C, en cualquier programa futuro.
+
+</div>
+
+---
+
+## Todo junto: el código completo para nuestro ejemplo
+
+Aplicado al triángulo `(0,0)`, `(4,0)`, `(0,3)` — área, un ángulo, y
+la validación final:
+
+```c
+#include <stdio.h>
+#include <math.h>
+
+int main(void) {
+    double x1=0, y1=0, x2=4, y2=0, x3=0, y3=3;
+
+    // Paso 1: área por coordenadas
+    double area = 0.5 * fabs(x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2));
+    printf("Area: %.2f\n", area);              // Area: 6.00
+
+    // Paso 2: longitudes de los 3 lados
+    double a = sqrt(pow(x3-x2,2) + pow(y3-y2,2)); // lado BC = 5
+    double b = sqrt(pow(x3-x1,2) + pow(y3-y1,2)); // lado AC = 3
+    double c = sqrt(pow(x2-x1,2) + pow(y2-y1,2)); // lado AB = 4
+
+    // Paso 3 y 4: ángulo opuesto al lado "a" (el vértice A), en grados
+    double anguloA_rad = acos((b*b + c*c - a*a) / (2*b*c));
+    double anguloA_deg = anguloA_rad * 180.0 / M_PI;
+    printf("Angulo en A: %.2f grados\n", anguloA_deg); // 90.00
+
+    // (mismo procedimiento para anguloB y anguloC...)
+
+    // Paso 5: validar con tolerancia
+    double suma = anguloA_deg /* + anguloB_deg + anguloC_deg */;
+    // if (fabs(suma - 180.0) < 0.01) printf("Triangulo valido\n");
+
+    return 0;
+}
+```
+
+<p class="small">Nota: <code>pow(x,2)</code> también sirve para elevar
+al cuadrado, como alternativa a escribir <code>(x)*(x)</code> — ambas
+formas son válidas, <code>pow()</code> viene de <code>math.h</code>.</p>
+
+
+---
+
+
+## 🔄 Bloque 5 de 5
+### Recursión
+
+<p class="small">Puntos del top 10 que cubre este bloque: <b>recursión en
+general</b>, <b>MCD de Euclides</b>, <b>factorial y overflow</b>, y
+<b>palíndromo recursivo</b>. Es el bloque más largo — el más complejo de
+los 10 puntos.</p>
+
+
+---
+
+## ¿Qué es la recursión?
+
+Una función **recursiva** es una función que se llama **a sí misma**.
+
+Suena raro la primera vez. Una intuición útil: pensalo como
+**muñecas rusas** — cada muñeca contiene una copia más chica de sí
+misma, hasta llegar a la muñequita final que ya no contiene nada
+adentro. Esa muñequita final es la que nos permite "cerrar" y volver
+para atrás, contando cuántas muñecas había.
+
+En código, cada vez que una función se llama a sí misma, no está
+"reciclando" sus variables — crea una **copia completamente nueva**
+de sus parámetros y variables locales. La llamada anterior queda
+"pausada", esperando el resultado de la nueva llamada.
+
+--
+
+## La pila de llamadas (idea, no en detalle)
+
+Cuando `funcionA()` llama a `funcionB()`, el programa **no abandona**
+`funcionA` — la deja "en pausa" en una estructura llamada **pila de
+llamadas** (*call stack*), y salta a ejecutar `funcionB`. Cuando
+`funcionB` termina, el programa vuelve exactamente al punto de
+`funcionA` donde se había quedado.
+
+Con recursión pasa lo mismo, pero `funcionA` y `funcionB` son la
+**misma función**, llamada con distintos valores. Cada llamada
+apilada tiene su **propia copia** de variables — no se mezclan entre
+sí.
+
+<p class="small">No hace falta entender la pila de llamadas en
+detalle técnico todavía — alcanza con la idea de que las llamadas se
+van "apilando" y después se van "resolviendo" en orden inverso.</p>
+
+---
+
+## Caso base y caso recursivo
+
+Toda función recursiva necesita **exactamente dos partes**:
+
+- **Caso base**: la condición donde la función **no** vuelve a
+  llamarse a sí misma. Devuelve un valor directo, sin más llamadas.
+  Es el "fondo" de las muñecas rusas.
+- **Caso recursivo**: la parte donde la función se llama a sí misma,
+  pero con un problema **más chico** (más cerca del caso base) que
+  el que recibió.
+
+```c
+tipo funcion_recursiva(parametros) {
+    if (condicion_caso_base) {
+        return valor_directo;       // no hay más llamadas
+    }
+    return /* algo con */ funcion_recursiva(version_mas_chica);
+}
+```
+
+--
+
+## ⚠️ Cuidado: sin caso base (o sin acercarse a él), no termina nunca
+
+```c
+// MAL: no hay caso base, o el caso recursivo no se acerca a él
+int mal(int n) {
+    return n * mal(n - 1);   // nunca hay un "if" que corte
+}
+```
+
+Cada llamada apila una nueva copia en la pila de llamadas. Si nunca
+se llega al caso base, la pila crece **sin límite** hasta que se
+queda sin memoria: error de **stack overflow** (desborde de pila) —
+el programa termina abruptamente (o crashea) en tiempo de ejecución.
+
+<div class="caution">
+
+**⚠️ Cuidado:** al escribir cualquier función recursiva, primero
+escribí el caso base. Después preguntate: "¿el caso recursivo
+realmente se acerca al caso base en cada llamada?" Si la respuesta no
+es un sí clarísimo, algo está mal.
+
+</div>
+
+---
+
+## Ejemplo de calentamiento: sumar de 1 a n
+
+Antes de ir a los ejercicios del TP, tracemos a mano una función
+recursiva bien simple: sumar todos los números de 1 hasta `n`.
+
+```c
+int sumar_hasta(int n) {
+    if (n == 0) {
+        return 0;                    // caso base
+    }
+    return n + sumar_hasta(n - 1);   // caso recursivo
+}
+```
+
+`sumar_hasta(4)` debería dar `4 + 3 + 2 + 1 = 10`. Veamos **cada
+llamada**, una por una.
+
+--
+
+## Trazando `sumar_hasta(4)` — subiendo (llamadas que se apilan)
+
+Cada llamada necesita el resultado de la siguiente para poder
+terminar. Se van apilando, todas "en pausa":
+
+```
+sumar_hasta(4)
+  necesita el resultado de sumar_hasta(3) para calcular 4 + sumar_hasta(3)
+  └─ sumar_hasta(3)
+       necesita el resultado de sumar_hasta(2) para calcular 3 + sumar_hasta(2)
+       └─ sumar_hasta(2)
+            necesita el resultado de sumar_hasta(1) para calcular 2 + sumar_hasta(1)
+            └─ sumar_hasta(1)
+                 necesita el resultado de sumar_hasta(0) para calcular 1 + sumar_hasta(0)
+                 └─ sumar_hasta(0)
+                      ¡caso base! devuelve 0 directamente, sin llamar a nadie más
+```
+
+Llegamos al fondo. Ahora hay que "deshacer" el camino, de abajo hacia
+arriba.
+
+--
+
+## Trazando `sumar_hasta(4)` — bajando (se resuelven los resultados)
+
+```
+sumar_hasta(0) devuelve 0                        (caso base)
+sumar_hasta(1) devuelve 1 + 0            = 1
+sumar_hasta(2) devuelve 2 + 1            = 3
+sumar_hasta(3) devuelve 3 + 3            = 6
+sumar_hasta(4) devuelve 4 + 6            = 10
+```
+
+Cada nivel usa el resultado que le devolvió el nivel de abajo. Recién
+cuando `sumar_hasta(0)` responde `0`, `sumar_hasta(1)` puede terminar
+de calcular su `1 + 0`, y así sucesivamente hacia arriba hasta
+`sumar_hasta(4)`, que finalmente entrega `10`.
+
+<div class="answer">
+
+**La clave para entender cualquier recursión**: separar mentalmente
+la fase de "ida" (llamadas apilándose, cada una esperando) de la fase
+de "vuelta" (resultados resolviéndose de adentro hacia afuera).
+
+</div>
+
+---
+
+## Ejercicio real 1: MCD recursivo (Algoritmo de Euclides)
+
+**Idea matemática**: el máximo común divisor de dos números **no
+cambia** si reemplazamos el número más grande por el resto de
+dividirlo por el más chico.
+
+```
+mcd(a, b) = mcd(b, a mod b)
+```
+
+Se repite este reemplazo hasta que el resto (`a mod b`) da `0`. En
+ese momento, el número que quedó (`b`) **ya es** el máximo común
+divisor — ese es el caso base.
+
+| Caso | Qué hace |
+|---|---|
+| Base (`b == 0`) | devolver `a` directamente |
+| Recursivo (`b != 0`) | devolver `mcd(b, a % b)` |
+
+--
+
+## Trazando `mcd(48, 18)`, paso a paso
+
+```
+mcd(48, 18)
+  48 % 18 = 12   →  llama a mcd(18, 12)
+
+mcd(18, 12)
+  18 % 12 = 6    →  llama a mcd(12, 6)
+
+mcd(12, 6)
+  12 % 6 = 0     →  llama a mcd(6, 0)
+
+mcd(6, 0)
+  ¡caso base! b == 0, entonces devuelve a = 6
+```
+
+Y ahora, de vuelta:
+
+```
+mcd(12, 6)  devuelve lo mismo que mcd(6, 0)   → 6
+mcd(18, 12) devuelve lo mismo que mcd(12, 6)  → 6
+mcd(48, 18) devuelve lo mismo que mcd(18, 12) → 6
+```
+
+**Resultado: `mcd(48, 18) = 6`.** Fijate que el segundo argumento
+(18, 12, 6, 0) va **bajando** en cada llamada — esa es la garantía
+de que la recursión termina: siempre se acerca al caso base `b == 0`.
+
+--
+
+## Código comentado: MCD recursivo
+
+```c
+// Prototipo: hace falta declararlo antes de usarlo
+int mcd_recursivo(int a, int b);
+
+int mcd_recursivo(int a, int b) {
+    if (b == 0) {
+        return a;                       // caso base: b llegó a 0
+    }
+    return mcd_recursivo(b, a % b);     // caso recursivo
+    // el nuevo "a" es el viejo "b", y el nuevo "b" es el resto
+}
+```
+
+<p class="small">Notá que el prototipo es obligatorio en este TP:
+sin él, el compilador no sabe que <code>mcd_recursivo</code> existe
+cuando la función se llama a sí misma dentro de su propio cuerpo.</p>
+
+---
+
+## Ejercicio real 2: Factorial recursivo
+
+**Definición matemática:**
+
+| Caso | Definición |
+|---|---|
+| Base (`n = 0` o `n = 1`) | `n! = 1` |
+| Recursivo (`n > 1`) | `n! = n × (n-1)!` |
+
+Es decir: `5! = 5 × 4!`, y `4! = 4 × 3!`, y así siguiendo hasta
+llegar a `1! = 1` (o `0! = 1`), que es el caso base.
+
+```c
+long long factorial_recursivo(int n) {
+    if (n == 0 || n == 1) {
+        return 1;                              // caso base
+    }
+    return n * factorial_recursivo(n - 1);     // caso recursivo
+}
+```
+
+--
+
+## Trazando `factorial(5)` — subiendo
+
+```
+factorial(5)
+  necesita 5 * factorial(4)
+  └─ factorial(4)
+       necesita 4 * factorial(3)
+       └─ factorial(3)
+            necesita 3 * factorial(2)
+            └─ factorial(2)
+                 necesita 2 * factorial(1)
+                 └─ factorial(1)
+                      ¡caso base! devuelve 1 directamente
+```
+
+--
+
+## Trazando `factorial(5)` — bajando
+
+| Llamada | Cálculo | Resultado |
+|---|---|---|
+| `factorial(1)` | caso base | `1` |
+| `factorial(2)` | `2 × 1` | `2` |
+| `factorial(3)` | `3 × 2` | `6` |
+| `factorial(4)` | `4 × 6` | `24` |
+| `factorial(5)` | `5 × 24` | `120` |
+
+Cada fila usa el resultado de la fila anterior. `factorial(5)`
+finalmente entrega `120` — pero no lo "calcula" hasta que las 4
+llamadas de adentro ya se resolvieron.
+
+---
+
+## El problema del overflow
+
+Un `int` en la mayoría de los sistemas actuales ocupa 32 bits, y su
+valor máximo es aproximadamente **2.147.483.647** (poco más de 2 mil
+millones).
+
+El factorial crece **muy** rápido:
+
+```
+10! = 3.628.800
+12! = 479.001.600         (todavía entra en un int)
+13! = 6.227.020.800       (¡ya NO entra en un int de 32 bits!)
+```
+
+`13!` ya supera el máximo de un `int`. Si se sigue usando `int` más
+allá de ese punto, el valor **se desborda**: el resultado que
+imprime el programa es un número incorrecto (puede salir negativo, o
+un valor sin ningún sentido), **sin ningún error ni aviso** — el
+programa compila y corre normalmente, solo que miente.
+
+--
+
+## Por eso `long long`
+
+```c
+int malo;         // se desborda calculando 13! o más
+long long bien;   // sirve tranquilamente hasta 20! aproximadamente
+```
+
+`long long` es un entero de (al menos) **64 bits**, con un rango
+muchísimo mayor (hasta unos 9.2 × 10¹⁸). Por eso la firma pedida en
+el TP es:
+
+```c
+long long factorial_recursivo(int n);
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** si adentro de la función multiplicás `n * factorial_recursivo(n - 1)`
+y `n` es `int` pero la función devuelve `long long`, la multiplicación
+igual se hace correctamente en 64 bits porque C "promueve" el `int` a
+`long long` antes de multiplicar — pero si en algún punto guardás un
+resultado intermedio en una variable `int`, ahí sí perdés el dato. La
+regla simple: si el resultado puede ser grande, **toda** la cadena de
+variables que lo toca debe ser `long long`, no solo el tipo de
+retorno de la función.
+
+</div>
+
+---
+
+## Validar la entrada ANTES de recurrir
+
+```c
+int validar_entrada(int n) {
+    return n >= 0;   // devuelve 1 (verdadero) o 0 (falso)
+}
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** ¿qué pasa si alguien llama a `factorial_recursivo(-3)`
+sin validar antes? El caso base busca `n == 0` o `n == 1` — pero con
+`n` negativo, cada llamada recursiva hace `n - 1`, así que `n` se
+aleja **cada vez más** de 0 y 1 (-3, -4, -5, -6, ...). **Nunca** llega
+al caso base. Es exactamente el escenario de recursión infinita que
+vimos antes: la pila de llamadas crece sin parar hasta el stack
+overflow.
+
+</div>
+
+La solución es validar **antes** de llamar por primera vez a la
+función recursiva, no dentro de ella — si `n < 0`, avisar al usuario
+y no recursar en absoluto.
+
+---
+
+## Ejercicio real 3: Palíndromo recursivo
+
+**Idea**: una palabra es palíndromo si se lee igual al derecho que al
+revés. La versión recursiva compara el primer y el último carácter:
+
+- Si son **distintos** → no es palíndromo (caso base, respuesta
+  negativa).
+- Si son **iguales** → el resultado depende de si la parte de
+  **adentro** (sin esos dos extremos) también es palíndromo — así que
+  nos preguntamos lo mismo, pero para una cadena más chica (caso
+  recursivo).
+- Si ya no queda nada por comparar (los índices se cruzaron o
+  coinciden) → es palíndromo (otro caso base, respuesta positiva).
+
+```c
+int es_palindromo_recursivo(char str[], int inicio, int fin) {
+    if (inicio >= fin) {
+        return 1;                    // caso base: no queda nada por comparar
+    }
+    if (str[inicio] != str[fin]) {
+        return 0;                    // caso base: extremos distintos
+    }
+    return es_palindromo_recursivo(str, inicio + 1, fin - 1);  // caso recursivo
+}
+```
+
+--
+
+## Trazando `es_palindromo_recursivo("radar", 0, 4)`
+
+La cadena `"radar"` tiene 5 caracteres, en las posiciones (índices)
+0, 1, 2, 3 y 4: `r`(0) `a`(1) `d`(2) `a`(3) `r`(4).
+
+| Llamada | inicio | fin | str[inicio] | str[fin] | ¿coinciden? | qué hace |
+|---|---|---|---|---|---|---|
+| 1 | 0 | 4 | `r` | `r` | sí | llama con (1, 3) |
+| 2 | 1 | 3 | `a` | `a` | sí | llama con (2, 2) |
+| 3 | 2 | 2 | — | — | `inicio >= fin` | caso base: devuelve 1 |
+
+La llamada 3 tiene `inicio == fin == 2` (el carácter `d`, el del
+medio) — no hace falta comparar nada, un solo carácter siempre es
+palíndromo consigo mismo. Devuelve `1`.
+
+--
+
+## Trazando `es_palindromo_recursivo("radar", 0, 4)` — la vuelta
+
+```
+llamada 3 (inicio=2, fin=2) devuelve 1              (caso base)
+llamada 2 (inicio=1, fin=3) devuelve lo mismo que la llamada 3 → 1
+llamada 1 (inicio=0, fin=4) devuelve lo mismo que la llamada 2 → 1
+```
+
+**Resultado: `1` (sí, es palíndromo).** Cada llamada no vuelve a
+comparar nada — simplemente **repite** el resultado de la llamada de
+adentro, porque ya comprobó que sus propios extremos coincidían.
+
+--
+
+## ¿Y si los caracteres no coinciden?
+
+Con `"hello"`: `h`(0) `e`(1) `l`(2) `l`(3) `o`(4).
+
+```
+llamada 1 (inicio=0, fin=4): str[0]='h', str[4]='o'  → NO coinciden
+                              caso base: devuelve 0 directamente
+```
+
+Ni siquiera hace falta seguir comparando el resto — apenas un par de
+extremos no coincide, ya sabemos que no es palíndromo, y esa
+respuesta (`0`) se propaga tal cual hacia arriba si hubiera más
+niveles esperando.
+
+---
+
+## ⚠️ Cuidado: hace falta normalizar antes de comparar
+
+`"Anita lava la tina"` **es** un palíndromo desde el punto de vista
+del significado (ignorando mayúsculas y espacios) — pero la función
+`es_palindromo_recursivo` compara caracteres **exactos**, uno por
+uno.
+
+```
+Primer carácter:  'A' (mayúscula, índice 0)
+Último carácter:  'a' (minúscula, último índice)
+
+'A' != 'a'   →  ¡ya en la primera comparación falla!
+```
+
+Aunque conceptualmente sea un palíndromo, `str[inicio] != str[fin]`
+da verdadero en la primerísima llamada, porque `'A'` y `'a'` son
+caracteres **distintos** para C (tienen códigos numéricos distintos
+en la tabla ASCII).
+
+<div class="caution">
+
+**⚠️ Cuidado:** lo mismo pasa con los espacios: comparar `' '`
+(espacio) contra una letra nunca va a coincidir. Por eso hay que
+**preparar** la cadena antes de mandarla a la función recursiva.
+
+</div>
+
+--
+
+## Las funciones auxiliares de normalización
+
+```c
+void convertir_minusculas(char str[]) {
+    // recorre la cadena y reemplaza cada letra mayúscula por su
+    // equivalente minúscula, carácter por carácter
+    for (int i = 0; str[i] != '\0'; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+void limpiar_espacios(char str[]) {
+    // recorre la cadena copiando solo los caracteres que NO son
+    // espacio, "compactando" el resultado sobre la misma cadena
+    int j = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ') {
+            str[j] = str[i];
+            j++;
+        }
+    }
+    str[j] = '\0';   // hay que volver a cerrar la cadena en el nuevo final
+}
+```
+
+El orden correcto es: primero normalizar la cadena completa (minúsculas,
+sin espacios), y **recién después** llamar a
+`es_palindromo_recursivo(str, 0, strlen(str) - 1)`.
+
+---
+
+## Checklist: ¿este problema se presta para recursión?
+
+<div class="answer">
+
+1. **¿Puedo definir el problema en términos de una versión más chica
+   de sí mismo?** (el MCD de dos números en términos del MCD de dos
+   números más chicos; un palíndromo en términos de un palíndromo más
+   corto).
+2. **¿Hay un caso base claro, y es alcanzable?** (¿el problema
+   "más chico" eventualmente llega a algo tan simple que no hace
+   falta seguir dividiéndolo?).
+3. **¿Cada llamada recursiva se acerca genuinamente al caso base?**
+   (un argumento que decrece, un rango que se achica, una cadena que
+   se acorta — algo que garantice que no es infinito).
+
+Si las tres respuestas son sí, la recursión es una herramienta
+natural para ese problema. Si alguna falla, hay que repensar el
+diseño antes de escribir código.
+
+</div>
+
+
+---
+
+
+## Ya vimos los 10 puntos
+
+<div class="answer">
+
+1. `do-while` vs `for`/`while`
+2. `switch` vs `if-else` (fall-through)
+3. Operadores bitwise (`&`, `|`)
+4. Conversión decimal → binario
+5. Parámetros de salida por puntero
+6. Fechas con validación (bisiestos, bordes)
+7. Geometría: área y ángulos de un triángulo
+8. Comparación de floats con tolerancia
+9. Recursión: MCD, factorial (overflow), palíndromo
+10. Cuándo un problema se presta para recursión
+
+</div>
+
+---
+
+## Y ahora, a programarlo
+
+Esta presentación explicó el **porqué** de cada cosa. El TP2 pide
+**programarlo** — con archivos `.c` separados, prototipos, sin warnings
+(`-Wall -Wextra -std=c11`), y comentarios que documenten cada función.
+
+Si algo de lo que viste acá no terminó de cerrar, es normal — volvé a
+esta presentación las veces que haga falta mientras programás. No está
+pensada para leerse una sola vez.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

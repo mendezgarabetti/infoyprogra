@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP2 - Parte 3: Subrutinas y recursión en C</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°2 – Parte 3
+#### Programación Modular con Subrutinas — Funciones y Recursión en C
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Clase pasada
+
+En la Parte 1 vimos los fundamentos del lenguaje y en la Parte 2
+control iterativo, `switch`, bitwise y geometría.
+
+Hoy el eje es **modularidad**: todo ejercicio de la Parte 3 se resuelve
+con **subrutinas** (funciones), y varios de ellos con **recursión**.
+
+---
+
+## Plan de hoy
+
+1. Manipulación de fechas con validación
+2. Conversión decimal a binario
+3. Evaluación de función polinómica (tabla de valores)
+4. MCD recursivo (algoritmo de Euclides)
+5. Factorial recursivo
+6. Palíndromo recursivo
+7. **A trabajar**: entrega y criterios
+
+---
+
+## Función vs. procedimiento vs. prototipo
+
+- **Función**: subrutina que devuelve un valor con `return`.
+- **Procedimiento**: subrutina `void`, no devuelve nada (pero puede
+  modificar sus parámetros si los recibe por puntero).
+- **Prototipo**: la firma de la función declarada **antes** de usarla,
+  para que el compilador sepa qué esperar.
+
+```c
+// Prototipo (arriba del archivo, o en un .h)
+int es_bisiesto(int anio);
+
+// Implementación (más abajo, o en el .c)
+int es_bisiesto(int anio) {
+    return (anio % 4 == 0 && anio % 100 != 0) || (anio % 400 == 0);
+}
+```
+
+---
+
+## 1. Fechas con validación
+
+Cuatro funciones que se apoyan entre sí:
+
+```c
+int es_bisiesto(int anio);
+int dias_del_mes(int mes, int anio);
+void fecha_anterior(int dia, int mes, int anio, int *d, int *m, int *a);
+void fecha_posterior(int dia, int mes, int anio, int *d, int *m, int *a);
+int dias_restantes_mes(int dia, int mes, int anio);
+```
+
+`fecha_anterior`/`fecha_posterior` son `void`: el resultado **no** se
+devuelve con `return`, se escribe en las direcciones que apuntan
+`d`, `m`, `a`.
+
+--
+
+## Punteros de salida: el patrón
+
+```c
+void fecha_posterior(int dia, int mes, int anio,
+                      int *d, int *m, int *a) {
+    // ... calcular el día siguiente ...
+    *d = diaCalculado;
+    *m = mesCalculado;
+    *a = anioCalculado;
+}
+
+// en el llamador:
+int d, m, a;
+fecha_posterior(31, 12, 2025, &d, &m, &a);
+```
+
+Es la única forma de que una función `void` "devuelva" más de un
+valor al mismo tiempo.
+
+--
+
+## ⚠️ Cuidado: los bordes del calendario
+
+Regla de bisiesto **exacta**: divisible por 4 **y** (no divisible por
+100 **o** divisible por 400) — 2000 es bisiesto, 1900 no.
+
+<div class="caution">
+
+**Casos que rompen implementaciones ingenuas:**
+- `31/12 → 01/01` (cambia mes **y** año)
+- `31/01 → 01/02` (cambia mes)
+- Febrero: 28 o 29 según `es_bisiesto()`, no un número fijo
+
+Si `dia == dias_del_mes(mes, anio)`, el día siguiente es `1` del
+**próximo** mes (y si `mes == 12`, próximo año).
+
+</div>
+
+---
+
+## 2. Decimal a binario
+
+Algoritmo de **división sucesiva por 2**: el residuo de cada división
+es un dígito binario, generado de derecha a izquierda.
+
+```c
+25 / 2 = 12 resto 1   →  bit menos significativo
+12 / 2 = 6  resto 0
+ 6 / 2 = 3  resto 0
+ 3 / 2 = 1  resto 1
+ 1 / 2 = 0  resto 1   →  bit más significativo
+```
+
+Resultado leído de abajo hacia arriba: `11001`.
+
+--
+
+## ⚠️ Cuidado: el orden sale invertido
+
+Los restos se generan del bit **menos** significativo al **más**
+significativo — el orden contrario al que hay que imprimir.
+
+```c
+void decimal_a_binario(int decimal) {
+    char bits[32];
+    int i = 0;
+    do {
+        bits[i++] = (decimal % 2) + '0';   // guardar, no imprimir
+        decimal /= 2;
+    } while (decimal > 0);
+
+    while (i > 0) putchar(bits[--i]);      // imprimir al revés
+}
+```
+
+<p class="small">Alternativa: hacerlo con <code>mostrar_binario_recursivo()</code> —
+la recursión invierte el orden gratis, porque el <code>printf</code> del dígito
+va <b>después</b> de la llamada recursiva.</p>
+
+---
+
+## 3. Tabla de valores de un polinomio
+
+`p(x) = a·x² + b·x + c`
+
+Tres funciones separadas por responsabilidad:
+
+```c
+double evaluar_polinomio(double a, double b, double c, double x);
+void tabla_valores(double a, double b, double c,
+                    double x1, double x2, double delta);
+void mostrar_encabezado(void);
+```
+
+`tabla_valores` recorre `[x1, x2]` en pasos de `delta` y llama a
+`evaluar_polinomio` en cada punto.
+
+--
+
+## ⚠️ Cuidado: acumular error sumando `delta`
+
+```c
+// riesgoso: el error de redondeo se acumula en cada suma
+for (double x = x1; x <= x2; x += delta) { ... }
+
+// más robusto: recalcular x desde el índice
+int n = (int)((x2 - x1) / delta);
+for (int i = 0; i <= n; i++) {
+    double x = x1 + i * delta;
+    ...
+}
+```
+
+<p class="small">Con muchas iteraciones, sumar <code>delta</code> repetidamente puede
+hacer que el bucle nunca llegue exactamente a <code>x2</code>, o se pase.</p>
+
+---
+
+## 4. MCD recursivo (Euclides)
+
+| Caso | Definición |
+|---|---|
+| Base (`b = 0`) | `gcd(a, b) = a` |
+| Recursivo (`b ≠ 0`) | `gcd(a, b) = gcd(b, a mod b)` |
+
+```c
+int mcd_recursivo(int a, int b) {
+    if (b == 0) {
+        return a;                    // caso base
+    }
+    return mcd_recursivo(b, a % b);  // caso recursivo
+}
+```
+
+--
+
+## Traza de ejecución
+
+```
+gcd(48, 18) = gcd(18, 48 mod 18) = gcd(18, 12)
+            = gcd(12, 18 mod 12) = gcd(12, 6)
+            = gcd(6,  12 mod 6)  = gcd(6, 0)
+            = 6
+```
+
+Cada llamada reduce el problema (el segundo argumento decrece) hasta
+llegar al caso base — la garantía de que la recursión termina.
+
+---
+
+## 5. Factorial recursivo
+
+| Caso | Definición |
+|---|---|
+| Base (`n = 0` o `n = 1`) | `n! = 1` |
+| Recursivo (`n > 1`) | `n! = n × (n-1)!` |
+
+```c
+long long factorial_recursivo(int n) {
+    if (n == 0 || n == 1) return 1;      // caso base
+    return n * factorial_recursivo(n - 1); // caso recursivo
+}
+```
+
+Funciones auxiliares pedidas: `validar_entrada(n)` (¿`n >= 0`?) y
+`mostrar_calculo(n)` para exhibir el proceso.
+
+--
+
+## ⚠️ Cuidado: overflow
+
+`13! > 6 × 10⁹` — ya no entra en un `int` de 32 bits (máximo
+~2.1 × 10⁹). Por eso la firma pide `long long`.
+
+```c
+int  malo;       // se desborda desde 13!
+long long bien;  // sirve hasta 20! aprox.
+```
+
+<p class="small">Validar <code>n &gt;= 0</code> <b>antes</b> de llamar a la recursión —
+factorial de un negativo nunca llega al caso base y recursa para siempre.</p>
+
+---
+
+## 6. Palíndromo recursivo
+
+Firma: `int es_palindromo_recursivo(char str[], int inicio, int fin)`
+— compara extremos y avanza hacia el centro.
+
+```c
+int es_palindromo_recursivo(char str[], int inicio, int fin) {
+    if (inicio >= fin) return 1;             // caso base: se cruzaron
+    if (str[inicio] != str[fin]) return 0;   // caso base: no matchea
+    return es_palindromo_recursivo(str, inicio + 1, fin - 1); // recursivo
+}
+```
+
+--
+
+## Antes de comparar: normalizar
+
+<div class="caution">
+
+**⚠️ Cuidado:** `"Anita lava la tina"` es palíndromo solo si antes se
+**normaliza** el texto — sacar espacios y pasar a minúsculas — porque
+la función compara carácter a carácter, y `'A' != 'a'`, `' ' != 'l'`.
+
+</div>
+
+```c
+void convertir_minusculas(char str[]);
+void limpiar_espacios(char str[]);   // opcional, según el caso de prueba
+```
+
+Preparar la cadena con estas dos funciones **antes** de llamar a
+`es_palindromo_recursivo`.
+
+---
+
+## Recordatorio de entrega
+
+- Un archivo por ejercicio: `ejercicio1.c` … `ejercicio6.c`
+- **Prototipos** de todas las funciones al inicio del programa
+- Código compilable **sin errores ni advertencias**
+  (`gcc -Wall -Wextra -std=c11`)
+- Comentarios que documenten cada función
+
+**Criterios**: uso correcto de subrutinas, recursión con casos base y
+recursivo bien identificados (ejercicios 4, 5 y 6), validación de
+entrada, modularidad, documentación.
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

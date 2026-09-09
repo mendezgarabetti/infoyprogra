@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP2 - Parte 2: Control, bitwise y geometría en C</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°2 – Parte 2
+#### Control iterativo, bitwise y geometría computacional
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Clase pasada
+
+En la Parte 1 vimos preprocesador, tipos, variables, operadores,
+control de flujo básico, subrutinas y recursión.
+
+Hoy usamos todo eso para resolver seis ejercicios de la **Parte 2**:
+bucles, `switch`, un algoritmo numérico, bitwise y un problema de
+geometría con vectores.
+
+---
+
+## Plan de hoy
+
+1. `for` / `while` / `do-while` comparados
+2. `switch` vs `if-else` anidado
+3. Números primos
+4. Máximo y mínimo de una secuencia
+5. Operadores bitwise (`&`, `|`)
+6. Geometría: área y ángulos de un triángulo
+7. **A trabajar**: entrega y criterios
+
+---
+
+## 1. Los tres bucles hacen lo mismo
+
+El objetivo del ejercicio 1 es notar que `for`, `while` y `do-while`
+pueden expresar la **misma** iteración con sintaxis distinta.
+
+```c
+for (int i = 1; i <= 10; i++) { /* ... */ }
+
+int i = 1;
+while (i <= 10) { /* ... */ i++; }
+
+int i = 1;
+do { /* ... */ i++; } while (i <= 10);
+```
+
+--
+
+## Diferencia clave: `do-while`
+
+`while` y `for` chequean la condición **antes** de entrar.
+`do-while` la chequea **después** — el cuerpo se ejecuta
+**al menos una vez**, aunque la condición sea falsa desde el inicio.
+
+<div class="caution">
+
+**⚠️ Cuidado:** en `do-while` es fácil olvidarse de actualizar la
+variable de control (acá, `i++`) porque queda "escondida" al final del
+bloque. Si se olvida, el bucle no termina nunca.
+
+</div>
+
+---
+
+## 2. `switch` vs `if-else` anidado
+
+Mismo problema (clasificar un carácter), dos estructuras distintas.
+El ejercicio pide programarlo **dos veces** para compararlas.
+
+```c
+switch (c) {
+    case 'a': case 'e': case 'i':
+    case 'o': case 'u':
+        vocales++;
+        break;
+    default:
+        if (isalpha(c)) consonantes++;
+}
+```
+
+<p class="small">Agrupar varios <code>case</code> sin <code>break</code> entre ellos es
+la forma estándar de decir "cualquiera de estos". El <code>break</code> real va
+al final del bloque que sí ejecuta código.</p>
+
+--
+
+## ⚠️ Cuidado: fall-through
+
+Si a un `case` le falta el `break`, la ejecución **sigue** cayendo al
+siguiente `case`, aunque no matchee. Es la causa más común de bugs con
+`switch`.
+
+Funciones útiles de `ctype.h`:
+
+| Función | Qué hace |
+|---|---|
+| `tolower(c)` | convierte a minúscula |
+| `isalpha(c)` | ¿es una letra? |
+
+<p class="small">Con <code>tolower()</code> primero, el <code>switch</code>/<code>if-else</code>
+solo necesita comparar contra minúsculas.</p>
+
+---
+
+## 3. Números primos
+
+Un primo tiene **exactamente** dos divisores: 1 y él mismo.
+Para saber si `n` es primo alcanza con probar divisores hasta
+`sqrt(n)` — si no hay ninguno hasta ahí, tampoco lo hay después.
+
+```c
+#include <math.h>   // compilar con -lm
+
+int esPrimo(int n) {
+    if (n < 2) return 0;
+    for (int d = 2; d <= sqrt(n); d++)
+        if (n % d == 0) return 0;
+    return 1;
+}
+```
+
+--
+
+## ⚠️ Cuidado con `sqrt(n)` en la condición del `for`
+
+Llamar a `sqrt(n)` en cada vuelta del bucle es correcto pero
+ineficiente. Alternativas:
+
+```c
+double limite = sqrt(n);
+for (int d = 2; d <= limite; d++) ...
+
+// o evitar sqrt() del todo:
+for (int d = 2; d*d <= n; d++) ...
+```
+
+<p class="small">El caso <code>n = 2</code> es borde: es primo, pero el bucle
+<code>d*d &lt;= n</code> ni siquiera entra — <code>return 1</code> lo cubre bien.</p>
+
+---
+
+## 4. Máximo y mínimo de 5 números
+
+Patrón clásico: **inicializar con el primer dato leído**, no con `0`.
+
+```c
+int n, max, min;
+scanf("%d", &n);
+max = min = n;
+
+for (int i = 1; i < 5; i++) {
+    scanf("%d", &n);
+    if (n > max) max = n;
+    if (n < min) min = n;
+}
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** inicializar `max = 0` (o `min = 0`) rompe el algoritmo
+si toda la secuencia es negativa — ningún número le va a "ganar" a 0.
+
+</div>
+
+---
+
+## 5. Operadores bitwise
+
+`&` y `|` operan **bit a bit**, no como `&&` / `||` (que operan sobre
+verdadero/falso completos).
+
+| A | B | A `&` B | A `\|` B |
+|---|---|---|---|
+| 0 | 0 | 0 | 0 |
+| 0 | 1 | 0 | 1 |
+| 1 | 0 | 0 | 1 |
+| 1 | 1 | 1 | 1 |
+
+--
+
+## Mostrar la representación binaria
+
+C no tiene un `printf("%b", ...)` estándar (glibc muy reciente lo
+agregó como extensión, pero no es portable). La forma clásica: recorrer
+los bits con `>>` y una máscara.
+
+```c
+void imprimirBinario(unsigned int n) {
+    for (int bit = 31; bit >= 0; bit--)
+        putchar((n >> bit) & 1 ? '1' : '0');
+}
+```
+
+<p class="small"><code>(n >> bit) & 1</code> desplaza el bit que interesa hasta
+la posición 0 y lo aísla con <code>&amp;1</code>.</p>
+
+---
+
+## 6. Geometría: triángulo desde 3 puntos
+
+Entrada: tres pares `(x, y)`. Dos cálculos independientes.
+
+**Área** (fórmula del "shoelace"):
+
+`Área = ½ · |x1(y2−y3) + x2(y3−y1) + x3(y1−y2)|`
+
+```c
+#include <math.h>
+double area = 0.5 * fabs(x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2));
+```
+
+--
+
+## Ángulos: distancia + Ley de Cosenos
+
+1. Longitud de cada lado con distancia euclidiana:
+   `d = sqrt((x2-x1)² + (y2-y1)²)`
+2. Ley de cosenos por cada ángulo:
+   `cos(C) = (a² + b² - c²) / (2ab)`
+3. `acos()` devuelve **radianes** → convertir a grados:
+   `grados = radianes * 180 / M_PI`
+
+```c
+double C = acos((a*a + b*b - c*c) / (2*a*b));
+double gradosC = C * 180.0 / M_PI;
+```
+
+--
+
+## ⚠️ Cuidado: validar con tolerancia
+
+La consigna pide verificar que los tres ángulos sumen ≈ 180°. Por
+errores de redondeo de punto flotante, **nunca** va a dar exactamente
+`180.0`.
+
+```c
+// mal: casi nunca es true
+if (a1 + a2 + a3 == 180.0) ...
+
+// bien: comparar con tolerancia
+if (fabs((a1 + a2 + a3) - 180.0) < 0.01) ...
+```
+
+Esto vale en general para comparar `float`/`double`: nunca con `==`.
+
+---
+
+## Recordatorio de entrega
+
+- Un archivo `.c` por ejercicio: `ejercicio1.c`, `ejercicio2a.c`,
+  `ejercicio2b.c`, etc.
+- Código compilable **sin errores ni advertencias**
+  (`gcc -Wall -Wextra -std=c11`)
+- Ejercicios con `math.h` compilan con `-lm`
+- Comentarios que documenten el código
+
+**Criterios**: funcionalidad, claridad, manejo de entrada/salida,
+validación de casos especiales, eficiencia del algoritmo.
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

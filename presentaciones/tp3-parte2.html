@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP3-A - Parte 2: Apuntadores y memoria dinámica</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°3-A – Parte 2
+#### Apuntadores, memoria dinámica y estructuras dinámicas
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Clase pasada
+
+En la Parte 1 vimos arreglos, cadenas, matrices con `rand()`/`srand()`,
+`struct` y recursión sobre cadenas (palíndromos).
+
+Hoy damos el salto a **memoria dinámica**: cómo modificar variables
+de otra función con punteros, reservar memoria en tiempo de ejecución
+con `malloc`, y aplicarlo a vectores y matrices.
+
+---
+
+## Plan de hoy
+
+1. Paso por referencia con punteros (ej. 7)
+2. `malloc` / `free` y vectores dinámicos (ej. 8, 9, 10)
+3. Modificar in-place vs. devolver un puntero nuevo
+4. Matrices dinámicas: producto y transpuesta (ej. 11, 12, 13)
+5. **A trabajar**: entrega y criterios
+
+---
+
+## 1. Paso por valor vs. paso por referencia
+
+Por defecto, C pasa argumentos **por valor**: la función recibe una
+**copia**. Cambiar la copia no cambia el original.
+
+```c
+void noDuplica(int v) {
+    v = v * 2;      // solo cambia la copia local
+}
+```
+
+Para que una función modifique una variable del `main`, hay que
+pasarle su **dirección de memoria** (un puntero).
+
+--
+
+## Paso por referencia con `*` y `&`
+
+```c
+void duplicar(int *v) {
+    *v = *v * 2;     // *v = "el valor en esa dirección"
+}
+
+int main(void) {
+    int x = 5;
+    duplicar(&x);    // &x = "la dirección de x"
+    printf("%d\n", x); // 10
+}
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** `&` y `*` son inversos: `&x` obtiene una dirección a
+partir de una variable, `*p` obtiene el valor a partir de una
+dirección. Confundir cuándo usar cada uno es el error más común al
+empezar con punteros.
+
+</div>
+
+---
+
+## 2. `malloc`: reservar memoria en tiempo de ejecución
+
+Un arreglo declarado como `int v[10]` tiene tamaño **fijo en tiempo de
+compilación**. `malloc` permite decidir el tamaño **en tiempo de
+ejecución** (ej. según un `N` que lee el usuario).
+
+```c
+#include <stdlib.h>
+
+double *crearVector(int n) {
+    double *v = malloc(n * sizeof(double));
+    if (v == NULL) { /* no hubo memoria disponible */ }
+    return v;
+}
+```
+
+--
+
+## ⚠️ Cuidado: `sizeof` del tipo correcto
+
+```c
+double *v = malloc(n * sizeof(int));   // MAL: reserva de menos
+double *v = malloc(n * sizeof(double)); // BIEN
+```
+
+Es un error muy común copiar/pegar una línea de `malloc` y olvidarse
+de actualizar el `sizeof`. El resultado no es un error de compilación
+— es memoria insuficiente que se corrompe silenciosamente al usarse.
+
+Siempre que se reserva con `malloc`, hay una `free` pendiente en algún
+lugar del programa.
+
+---
+
+## 3. Modificar in-place vs. crear algo nuevo
+
+Dos formas válidas de que una función "devuelva" un resultado:
+
+| Estrategia | Cuándo usarla |
+|---|---|
+| **In-place**: recibe un puntero y modifica esa memoria directamente | Cuando el enunciado dice explícitamente "sin crear otro arreglo" |
+| **Crear y devolver**: reserva memoria nueva con `malloc` y devuelve el puntero | Cuando la función necesita generar una estructura que no existía |
+
+```c
+// in-place: escala el MISMO arreglo, no crea uno nuevo
+void escalar(double *v, int n, double s) {
+    for (int i = 0; i < n; i++) v[i] *= s;
+}
+```
+
+--
+
+## ⚠️ Cuidado: no mezclar las dos estrategias
+
+Si la consigna pide modificar in-place, hacer `malloc` de un arreglo
+nuevo adentro de la función y devolverlo **no** cumple la consigna,
+aunque el resultado numérico sea correcto — y además genera una fuga
+de memoria si nadie libera el arreglo original.
+
+Antes de escribir la función, preguntarse: *¿el enunciado quiere que
+yo modifique lo que me pasaron, o que yo genere algo nuevo?*
+
+---
+
+## ¿Quién libera la memoria?
+
+Regla simple: **quien reserva con `malloc`, o quien orquesta el
+programa al final, es responsable del `free`**.
+
+```c
+double *a = crearVector(n);
+double *b = crearVector(n);
+// ... usar a y b ...
+free(a);
+free(b);
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** usar un puntero después de liberarlo (*dangling
+pointer*) o llamar `free()` dos veces sobre el mismo puntero
+(*double free*) son errores de memoria clásicos — el programa puede
+"andar bien" en una corrida y fallar en otra.
+
+</div>
+
+---
+
+## 4. Matrices dinámicas
+
+Una matriz `M x N` dinámica suele representarse como un arreglo de
+punteros: cada fila es, a su vez, un `malloc` independiente.
+
+```c
+double **crearMatriz(int filas, int columnas) {
+    double **m = malloc(filas * sizeof(double *));
+    for (int i = 0; i < filas; i++)
+        m[i] = malloc(columnas * sizeof(double));
+    return m;
+}
+```
+
+<p class="small">Liberarla requiere el orden inverso: primero cada
+fila, después el arreglo de punteros.</p>
+
+--
+
+## Producto matricial: validar antes de multiplicar
+
+Para multiplicar A (M×N) por B (N×P), las columnas de A deben
+coincidir con las filas de B. El resultado C es M×P.
+
+```c
+// A: M x N,  B: N x P  ->  C: M x P
+for (int i = 0; i < M; i++)
+    for (int j = 0; j < P; j++) {
+        C[i][j] = 0;
+        for (int k = 0; k < N; k++)
+            C[i][j] += A[i][k] * B[k][j];
+    }
+```
+
+La función debe **reservar C dinámicamente** adentro y devolver el
+puntero — y antes de todo, chequear que las dimensiones sean
+compatibles.
+
+--
+
+## ⚠️ Cuidado: transponer in-place solo es directo si es cuadrada
+
+Transponer una matriz cuadrada (`N x N`) in-place es sencillo:
+intercambiar `m[i][j]` con `m[j][i]`.
+
+```c
+for (int i = 0; i < n; i++)
+    for (int j = i + 1; j < n; j++) {
+        double tmp = m[i][j];
+        m[i][j] = m[j][i];
+        m[j][i] = tmp;
+    }
+```
+
+Si la matriz es `M x N` con `M != N`, la transpuesta tiene forma
+`N x M` — **no entra** en la misma memoria reservada como `M x N`. Es
+una trampa concreta del enunciado: conviene pensarlo antes de
+programarlo, no durante.
+
+---
+
+## Encadenando todo (ej. 10 y 13)
+
+El patrón general de estos ejercicios integradores:
+
+1. Leer parámetros (`N`, o `M`/`N`/`P`) por teclado
+2. Reservar con `malloc` todo lo que haga falta
+3. Operar (escalar, multiplicar, transponer)
+4. Mostrar resultados intermedios y finales
+5. `free()` de **todo** lo reservado, en orden inverso
+
+<div class="caution">
+
+**⚠️ Cuidado:** con varias matrices y vectores dinámicos en juego, es
+fácil perder la cuenta de qué liberar. Conviene liberar cada cosa
+apenas deja de necesitarse, no todo junto al final del programa.
+
+</div>
+
+---
+
+## Recordatorio de entrega
+
+- Un archivo `.c` por ejercicio, siguiendo la numeración del TP
+- Código compilable **sin errores ni advertencias**
+  (`gcc -Wall -Wextra -std=c11`)
+- Cada `malloc` debe tener su `free` correspondiente
+- Opcional: `valgrind ./programa` detecta fugas y accesos inválidos
+  a memoria, si lo tienen instalado
+
+**Criterios**: funcionalidad, manejo correcto de memoria dinámica,
+validación de dimensiones, claridad del código.
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

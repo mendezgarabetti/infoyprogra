@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP3-A - Parte 1: Estructuras de datos y cadenas</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°3-A – Parte 1
+#### Estructuras de datos y cadenas
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Clase pasada
+
+En el TP2 Parte 3 vimos programación modular con subrutinas,
+prototipos y recursión (fechas, MCD, factorial, palíndromos).
+
+Hoy damos un paso más: arreglos y matrices con datos aleatorios,
+parsing de cadenas, y la primera estructura de datos propia con
+`struct`.
+
+---
+
+## Plan de hoy
+
+1. Vector con valores aleatorios: promedio y mínimo
+2. Matriz condicional con `rand()`
+3. Parsing de una operación matemática desde un string
+4. Palíndromo recursivo (repaso, sobre frases)
+5. `struct` para representar una fecha
+6. `struct` para vectores en R3: producto vectorial
+
+---
+
+## 1. Vector aleatorio: promedio y mínimo
+
+`rand()` devuelve un entero pseudoaleatorio; `srand()` fija la
+"semilla" que arranca la secuencia.
+
+```c
+#include <stdlib.h>
+#include <time.h>
+
+srand(time(NULL));           // semilla distinta en cada corrida
+int v[N];
+for (int i = 0; i < N; i++)
+    v[i] = rand() % 100;     // valores 0..99
+```
+
+--
+
+## ⚠️ Cuidado: semilla y acumulador
+
+<div class="caution">
+
+Si **no** llamás a `srand()`, `rand()` siempre arranca desde la misma
+semilla por defecto (`1`) — el programa genera **la misma** secuencia
+"aleatoria" en cada ejecución.
+
+</div>
+
+Para el promedio, acumulá en `double` (o dividí como `double`), no en
+`int`:
+
+```c
+int suma = 0;
+for (int i = 0; i < N; i++) suma += v[i];
+double promedio = (double) suma / N;   // sin el cast trunca a entero
+```
+
+---
+
+## 2. Matriz con condición sobre índices
+
+Recorrer una matriz `M x N` y decidir el valor de cada celda según
+`i + j`.
+
+```c
+int m[FIL][COL];
+for (int i = 0; i < FIL; i++)
+    for (int j = 0; j < COL; j++)
+        if ((i + j) % 2 == 0)
+            m[i][j] = rand() % 10000 + 1;   // 1..10000
+        else
+            m[i][j] = 0;
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** `rand() % 10000` da valores `0..9999`. El enunciado
+pide el rango `1..10000` — hay que sumar 1 al resultado.
+
+</div>
+
+---
+
+## 3. Leer una operación desde un string
+
+Entrada como `"2.4+3"`: dos números reales separados por un operador
+(`+ - * /`), sin espacios. Dos formas de parsearlo.
+
+```c
+char entrada[101];
+double a, b;
+char op;
+
+// Opción simple: si el formato es siempre "num OP num"
+sscanf(entrada, "%lf%c%lf", &a, &op, &b);
+```
+
+--
+
+## Alternativa: recorrer carácter a carácter
+
+Si el operador puede no ser sabido de antemano, hay que buscarlo
+recorriendo el string y cortar en dos substrings para convertir cada
+uno con `atof()` / `strtod()`.
+
+```c
+for (int i = 0; entrada[i] != '\0'; i++) {
+    if (strchr("+-*/", entrada[i])) {
+        op = entrada[i];
+        // entrada[0..i-1] es el primer número,
+        // entrada[i+1..]  es el segundo
+    }
+}
+```
+
+<p class="small"><code>strtod()</code> es preferible a <code>atof()</code>: informa hasta
+dónde pudo leer un número válido, útil para detectar errores de formato.</p>
+
+---
+
+## 4. Palíndromo recursivo, ahora con frases
+
+Mismo algoritmo del TP anterior (comparar extremos y recursar hacia
+adentro), pero ahora sobre una **frase**, no solo una palabra.
+
+```c
+int esPalindromo(char s[], int inicio, int fin) {
+    if (inicio >= fin) return 1;
+    if (s[inicio] != s[fin]) return 0;
+    return esPalindromo(s, inicio + 1, fin - 1);
+}
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** con frases hay que **normalizar** antes de comparar:
+pasar todo a minúsculas con `tolower()` y, si se quiere aceptar
+"Anita lava la tina", **quitar los espacios** antes de llamar a la
+función recursiva — si no, compara espacios contra letras y falla.
+
+</div>
+
+---
+
+## 5. `struct` para representar una fecha
+
+Agrupar `día`, `mes` y `año` en un solo tipo, en vez de manejar tres
+variables sueltas.
+
+```c
+typedef struct {
+    int dia;
+    int mes;
+    int anio;
+} Fecha;
+
+void mostrarFecha(Fecha f) {
+    printf("%02d/%02d/%04d\n", f.dia, f.mes, f.anio);
+}
+```
+
+--
+
+## ⚠️ Cuidado: valor vs. puntero
+
+Pasar un `struct` **por valor** copia todos sus campos — la función
+recibe una copia y **no puede modificar** la variable original del
+`main`.
+
+```c
+void mostrarFecha(Fecha f);        // solo lee: por valor está bien
+void avanzarUnDia(Fecha *f);       // modifica: necesita puntero
+
+// dentro de avanzarUnDia:
+f->dia = f->dia + 1;               // -> en vez de (*f).dia
+```
+
+<p class="small">Esto es exactamente el mismo problema que "pasaje por valor"
+que vimos con variables sueltas — con <code>struct</code> aplica igual.</p>
+
+---
+
+## 6. Producto vectorial en R3
+
+Un `struct` para el vector, y la fórmula del determinante simbólico
+`(i, j, k)` aplicada componente a componente.
+
+```c
+typedef struct { double x, y, z; } Vector3;
+
+Vector3 productoVectorial(Vector3 a, Vector3 b) {
+    Vector3 r;
+    r.x = a.y*b.z - a.z*b.y;
+    r.y = a.z*b.x - a.x*b.z;   // ojo: signo cruzado
+    r.z = a.x*b.y - a.y*b.x;
+    return r;
+}
+```
+
+<div class="caution">
+
+**⚠️ Cuidado:** la componente `y` del resultado lleva el **orden
+invertido** respecto a `x` y `z` (`a.z*b.x - a.x*b.z`, no
+`a.x*b.z - a.z*b.x`). Es el error de tipeo más común al copiar la
+fórmula del determinante.
+
+</div>
+
+---
+
+## Recordatorio de entrega
+
+- Un archivo `.c` por ejercicio
+- Código compilable **sin errores ni advertencias**
+  (`gcc -Wall -Wextra -std=c11`)
+- `struct` con `typedef` donde el enunciado lo pide
+- Comentarios que documenten el código
+
+**Criterios**: funcionalidad, claridad, manejo de entrada/salida,
+validación de casos especiales, uso correcto de `struct` y recursión.
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

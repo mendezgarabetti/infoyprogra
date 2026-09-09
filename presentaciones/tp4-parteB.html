@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>TP4 - Parte B: Introducción a los lenguajes dinámicos (Python)</title>
+
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.7em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Trabajo Práctico N°4 – Parte B
+#### Introducción a los lenguajes dinámicos: implementación en Python
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Slide de título. F = pantalla completa, flechas/espacio para avanzar.
+
+---
+
+## Por qué cambiamos de lenguaje hoy
+
+Todo el curso fue en **C**. Hoy, por primera vez, programamos en
+**Python** — un **lenguaje dinámico**.
+
+El objetivo no es "aprender Python a fondo", sino **notar el
+contraste**: mismas ideas algorítmicas (las que ya diseñamos en la
+Parte A), pero con muchísima menos fricción de bajo nivel.
+
+--
+
+## C vs. Python, en una tabla
+
+| | C | Python |
+|---|---|---|
+| Tipos | estáticos, declarados | dinámicos, inferidos |
+| Compilación | `gcc` antes de ejecutar | se interpreta directo |
+| Memoria | `malloc`/`free` manual | automática (garbage collector) |
+| Arreglos | tamaño fijo o reservado a mano | listas dinámicas nativas |
+| Registros | `struct` | diccionario o clase |
+
+<p class="small">No hay punteros que gestionar a mano ni <code>#include</code>:
+gran parte del código de la Parte A en C acá se reduce a estructuras de
+datos nativas del lenguaje.</p>
+
+---
+
+## Plan de hoy
+
+1. Ejercicio 5 — Parking inteligente (implementación)
+2. Ejercicio 6 — Batalla naval espacial (implementación + reflexión)
+3. Ejercicio 7 — Wordle
+4. Ejercicio 8 — Conway's Game of Life
+5. Ejercicio 9 — Estadísticas de un archivo de texto
+6. **A trabajar**: entrega
+
+---
+
+## 5. Parking inteligente: de diagrama a código
+
+En la Parte A diseñamos el algoritmo de alto nivel. Hoy lo bajamos a
+Python **usando ese mismo diseño** — la lógica de negocio no cambia,
+cambia la herramienta.
+
+```python
+piso = {"nivel": 1, "capacidad": 50, "ocupados": 0}
+estacionamiento = [piso, {"nivel": 2, "capacidad": 60, "ocupados": 0}, ...]
+
+def hay_lugar(piso, lugares_necesarios):
+    libres = piso["capacidad"] - piso["ocupados"]
+    return libres >= lugares_necesarios
+```
+
+<p class="small">Un diccionario reemplaza al <code>struct</code> de C; una lista
+de diccionarios reemplaza al arreglo de structs.</p>
+
+--
+
+## ⚠️ Cuidado: dinámico no es "sin reglas"
+
+En Python las listas **crecen solas** — no hay que declarar un tamaño
+fijo ni pedir memoria con `malloc`. Pero eso es sobre la estructura de
+datos, **no** sobre las reglas del problema.
+
+Los límites de negocio (50/60/55 lugares, 50% máx. de vehículos
+grandes por piso, etc.) hay que seguir **validándolos explícitamente**
+en el código — Python no los infiere por vos.
+
+---
+
+## 6. Batalla naval espacial: modelar el tablero
+
+Tablero 4×4 → matriz como **lista de listas**. Nave con 3 partes →
+lista de diccionarios, cada uno con posición y escudo restante.
+
+```python
+tablero = [[0] * 4 for _ in range(4)]
+
+nave = [
+    {"fila": "C", "col": 2, "escudo": 4},
+    {"fila": "C", "col": 3, "escudo": 7},
+    {"fila": "C", "col": 4, "escudo": 1},
+]
+```
+
+--
+
+## ⚠️ Cuidado: `[[0]*4]*4` NO crea 4 filas independientes
+
+```python
+# mal: las 4 filas son la MISMA lista, repetida por referencia
+tablero = [[0] * 4] * 4
+tablero[0][0] = 9   # ¡cambia también tablero[1][0], [2][0], [3][0]!
+
+# bien: una lista nueva por cada fila
+tablero = [[0] * 4 for _ in range(4)]
+```
+
+<p class="small">Es el bug de "aliasing" más común al crear matrices en
+Python — no tiene equivalente directo en C, donde <code>int t[4][4]</code>
+siempre reserva memoria contigua real.</p>
+
+--
+
+## Para responder en la entrega (ejercicio 6)
+
+No se resuelven acá — son para que las respondan en el documento
+después de programar ambos ejercicios:
+
+a) ¿Sirvió hacer un análisis y diseño algorítmico previo a programar?
+   Justifiquen.
+
+b) ¿Hubo elementos (entradas, salidas, requerimientos) que no se
+   habían contemplado en el análisis y aparecieron al programar?
+   ¿Cuáles?
+
+c) ¿La separación lógica del problema se vio reflejada en las
+   funciones que terminaron implementando?
+
+---
+
+## 7. Wordle: comparar contra la palabra secreta
+
+Verde = letra correcta en posición correcta. Amarillo = la letra está
+en la palabra, pero en otra posición. Gris = no está.
+
+```python
+def evaluar_intento(intento, secreta):
+    resultado = ["gris"] * 5
+    restantes = list(secreta)
+
+    for i in range(5):               # primera pasada: verdes
+        if intento[i] == secreta[i]:
+            resultado[i] = "verde"
+            restantes[i] = None
+    # falta la segunda pasada (amarillos) — ver siguiente slide
+    return resultado
+```
+
+--
+
+## ⚠️ Cuidado: letras repetidas
+
+Si la secreta tiene **una sola** `a` y el intento tiene **dos**, solo
+**una** debe marcarse amarilla — la otra queda gris.
+
+Por eso los verdes se descuentan de `restantes` *antes* de buscar
+amarillos: cada letra de la secreta solo puede "gastarse" una vez.
+
+```python
+    for i in range(5):               # segunda pasada: amarillos
+        if resultado[i] == "gris" and intento[i] in restantes:
+            resultado[i] = "amarillo"
+            restantes[restantes.index(intento[i])] = None
+```
+
+---
+
+## 8. Conway's Game of Life
+
+Regla en tres casos, aplicada **simultáneamente** a toda la grilla:
+
+- Viva con 2 o 3 vecinas vivas → sigue viva
+- Muerta con exactamente 3 vecinas vivas → nace
+- Cualquier otro caso → muere o sigue muerta
+
+```python
+def contar_vecinos_vivos(grilla, fila, col):
+    total = 0
+    for df in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            if df == 0 and dc == 0:
+                continue
+            f, c = fila + df, col + dc
+            if 0 <= f < len(grilla) and 0 <= c < len(grilla[0]):
+                total += grilla[f][c]
+    return total
+```
+
+--
+
+## ⚠️ Cuidado: todas las celdas cambian "a la vez"
+
+El siguiente estado depende del estado **actual** de los vecinos. Si
+vas actualizando la misma grilla mientras la recorrés, una celda ya
+actualizada contamina el conteo de vecinos de la celda siguiente.
+
+```python
+# mal: modifica la grilla mientras la sigue leyendo
+for f in range(filas):
+    for c in range(columnas):
+        grilla[f][c] = siguiente_estado(...)   # ¡usa datos ya mezclados!
+
+# bien: se construye una grilla nueva y se reemplaza al final
+nueva = [[siguiente_estado(f, c) for c in range(columnas)] for f in range(filas)]
+grilla = nueva
+```
+
+---
+
+## 9. Estadísticas del archivo de texto
+
+Abrir el `.txt` provisto con el TP y calcular caracteres, oraciones,
+palabras, y la palabra de más de 6 letras que más se repite.
+
+```python
+from collections import Counter
+
+with open("UniversidadNacionaldeCuyo.txt", encoding="utf-8") as f:
+    texto = f.read()
+
+cant_caracteres = len(texto)
+cant_oraciones = texto.count(".")
+palabras = texto.split()
+cant_palabras = len(palabras)
+```
+
+--
+
+## ⚠️ Cuidado: normalizar antes de contar
+
+Si no se limpia el texto, `"programación"`, `"Programación"` y
+`"programación,"` se cuentan como tres palabras distintas.
+
+```python
+import re
+
+def normalizar(palabra):
+    return re.sub(r"[^\wáéíóúñ]", "", palabra.lower())
+
+candidatas = [normalizar(p) for p in palabras]
+candidatas = [p for p in candidatas if len(p) > 6]
+conteo = Counter(candidatas)
+mas_repetida = conteo.most_common(1)
+```
+
+<p class="small"><code>Counter</code> (de <code>collections</code>) reemplaza el
+patrón manual de "diccionario contador" que armarían a mano en C con un
+arreglo de structs (palabra, contador).</p>
+
+---
+
+## Recordatorio de entrega
+
+- Código Python de los ejercicios 5, 7, 8 y 9
+- Código Python del ejercicio 6 **+ las 3 respuestas reflexivas**,
+  en el mismo documento o carpeta de entrega
+- Probar casos límite: tablero sin impactos, Wordle con letras
+  repetidas, grilla de Game of Life vacía, archivo de texto real
+
+---
+
+## A trabajar
+
+Dudas puntuales, levanten la mano.
+
+Vamos recorriendo los grupos.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="vendor/reveal.js/dist/reveal.js"></script>
+	<script src="vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

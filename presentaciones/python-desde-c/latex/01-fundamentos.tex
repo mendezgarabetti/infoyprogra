@@ -1,0 +1,529 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Presentacion 1/3: Introduccion a Python para Programadores de C
+% Serie "Python desde C" - TP4 Parte B (UNCuyo - Informatica y Programacion)
+% Compilar con: pdflatex -shell-escape 01-fundamentos.tex  (dos pasadas)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{beamer}
+
+% Paquetes basicos
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% Paquete para el resaltado de codigo de alta calidad
+\usepackage{minted}
+
+% Tema visual de la presentacion
+\usetheme{Madrid}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}
+
+% Recapitula el indice, resaltando la seccion actual, al empezar cada seccion
+\AtBeginSection[]{
+  \begin{frame}{Indice de Contenidos}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+% --- Informacion del Titulo ---
+\title[Python desde C -- 1/3]{Introducción a Python para Programadores de C}
+\subtitle{1/3 -- Sintaxis, tipos, control de flujo y funciones}
+\author{Informática y Programación}
+\date{\today}
+\institute{UNCuyo -- Facultad de Ingeniería}
+
+% --- Inicio del Documento ---
+\begin{document}
+
+% --- Diapositiva del Titulo ---
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% --- Diapositiva del Indice ---
+\begin{frame}{Índice de Contenidos}
+  \tableofcontents
+\end{frame}
+
+\begin{frame}{Por qué cambiamos de lenguaje ahora}
+  \begin{block}{No es un lenguaje nuevo desde cero}
+    Ya conocés variables, tipos, condicionales, bucles y funciones —
+    los mismos \textbf{conceptos} de siempre, pero sin compilar y con menos
+    sintaxis. Esta serie va a apoyarse todo el tiempo en lo que ya sabés de
+    C para aprender Python por \textbf{contraste}, no por repetición.
+  \end{block}
+  \begin{alertblock}{Esta es la presentación 1 de 3}
+    \begin{enumerate}
+      \item \textbf{Fundamentos} (ésta): sintaxis, tipos, control, E/S, funciones.
+      \item \textbf{Estructuras de datos}: listas, tuplas y diccionarios.
+      \item \textbf{Cadenas, archivos y funciones avanzadas}.
+    \end{enumerate}
+  \end{alertblock}
+\end{frame}
+
+
+% ===============================================================
+\section{1. Sintaxis Fundamental}
+% ===============================================================
+
+\begin{frame}[fragile]{¡Hola, Mundo!}
+  \begin{block}{Puntos Clave}
+    \begin{itemize}
+      \item Python es un lenguaje interpretado, no requiere compilación explícita.
+      \item No hay función \texttt{main()} obligatoria.
+      \item El punto y coma \texttt{;} es opcional y no se usa.
+      \item Los bloques de código se definen por \textbf{indentación}, no por llaves \texttt{\{\}}.
+    \end{itemize}
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+#include <stdio.h>
+
+int main() {
+    printf("Hola, Mundo!\n");
+    return 0;
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+print("Hola, Mundo!")
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Cuidado: la indentación es sintaxis}
+  \begin{alertblock}{No es solo prolijidad}
+    En C, la indentación es una convención visual — el compilador no la
+    mira, solo le importan las llaves. En Python, la indentación
+    \textbf{define} qué líneas pertenecen a qué bloque. Mezclar espacios y
+    tabs, o indentar mal, es un error de sintaxis real (\texttt{IndentationError}).
+  \end{alertblock}
+  \begin{minted}[fontsize=\small, frame=lines]{python}
+if 5 > 3:
+    print("Se ejecuta")   # pertenece al if (4 espacios)
+      print("Error!")     # IndentationError: indentado de mas
+  \end{minted}
+\end{frame}
+
+% ===============================================================
+\section{2. Variables y Tipos de Datos}
+% ===============================================================
+
+\begin{frame}[fragile]{Variables y Tipos de Datos}
+  \begin{block}{Diferencia Principal: Tipado}
+    \begin{itemize}
+        \item \textbf{C es de tipado estático:} Debes declarar el tipo de la variable antes de usarla (\texttt{int}, \texttt{float}, etc.).
+        \item \textbf{Python es de tipado dinámico:} El tipo se infiere automáticamente en el momento de la asignación.
+    \end{itemize}
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int cantidad = 10;
+float precio = 95.50;
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+# La variable toma el tipo
+# del valor asignado
+cantidad = 10
+precio = 95.50
+
+# Podemos verificar el tipo
+# type(cantidad) -> <class 'int'>
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Cuidado: dinámico no es ``sin tipo''}
+  \begin{alertblock}{La variable puede cambiar de tipo, el valor no}
+    ``Dinámico'' significa que el mismo \textit{nombre} puede referirse a
+    valores de distinto tipo en distintos momentos — no que Python ignore
+    los tipos. Sigue siendo \textbf{fuertemente tipado}: no suma un
+    \texttt{int} y un \texttt{str} sin conversión explícita, igual que C.
+  \end{alertblock}
+  \begin{minted}[fontsize=\small, frame=lines]{python}
+x = 10        # x es int
+x = "diez"    # ahora x es str (valido, x cambio de tipo)
+
+edad = 20
+print("Tengo " + edad)   # TypeError: no se puede sumar str + int
+print("Tengo " + str(edad))  # correcto: conversion explicita
+  \end{minted}
+\end{frame}
+
+% ===============================================================
+\section{3. Estructuras de Control}
+% ===============================================================
+
+\begin{frame}[fragile]{Condicionales: if / elif / else}
+  \begin{alertblock}{Lógica de Ejecución}
+    La estructura ejecuta \textbf{únicamente el primer bloque} cuya condición sea verdadera (\texttt{true}) y luego sale por completo, ignorando el resto.
+  \end{alertblock}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int nota = 75;
+
+if (nota >= 90) {
+    printf("Excelente\n");
+} else if (nota >= 60) {
+    printf("Aprobado\n");
+} else {
+    printf("Reprobado\n");
+}
+// Salida: Aprobado
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+nota = 75
+
+if nota >= 90:
+    print("Excelente")
+elif nota >= 60:
+    print("Aprobado")
+else:
+    print("Reprobado")
+# Salida: Aprobado
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Equivalente a Switch}
+  \begin{block}{Simulando un Switch}
+      Python no tiene una estructura \texttt{switch-case} tradicional. El comportamiento idéntico se logra con una cadena \texttt{if/elif/else}.
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int dia = 2;
+switch (dia) {
+    case 1: printf("Lunes\n"); break;
+    case 2: printf("Martes\n"); break;
+    default: printf("Otro dia\n");
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+dia = 2
+if dia == 1:
+    print("Lunes")
+elif dia == 2:
+    print("Martes")
+else:
+    print("Otro dia")
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Bucles: while}
+  \begin{block}{Sintaxis Similar}
+    La lógica del \texttt{while} es idéntica. Cambian los detalles: sin paréntesis en la condición y sin el operador \texttt{i++}.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int i = 0;
+while (i < 5) {
+    printf("%d\n", i);
+    i++;
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+i = 0
+while i < 5:
+    print(i)
+    i += 1
+      \end{minted}
+    \end{column}
+  \end{columns}
+  \vspace{0.3em}
+  \small \textit{Python no tiene \texttt{i++} ni \texttt{i- -}: se usa \texttt{i += 1}.}
+\end{frame}
+
+
+\begin{frame}[fragile]{Bucles: for}
+  \begin{block}{Filosofía Diferente}
+    El \texttt{for} de C es un contador. El \texttt{for} de Python itera sobre secuencias. Para replicar el comportamiento de C, usamos \texttt{range()}.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C (Contador)}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int i;
+for (i = 0; i < 5; i++) {
+    printf("%d\n", i);
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python (Iterador)}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+# range(5) genera 0, 1, 2, 3, 4
+for i in range(5):
+    print(i)
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{range()} con inicio, fin y paso}
+  \begin{block}{Igual de flexible que un \texttt{for} de C}
+    \texttt{range(inicio, fin, paso)} — \texttt{fin} nunca se incluye, igual que la condición de corte de un \texttt{for} en C.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+for (int i = 10; i > 0; i--) {
+    printf("%d\n", i);
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+for i in range(10, 0, -1):
+    print(i)
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{4. Entrada de Datos desde Teclado}
+% ===============================================================
+
+\begin{frame}[fragile]{Lectura de Datos: scanf vs input()}
+  \begin{block}{Diferencia Clave}
+    \begin{itemize}
+      \item En C usas \texttt{scanf()} con especificadores de formato.
+      \item En Python usas \texttt{input()}, que \textbf{siempre retorna un string}.
+      \item Debes convertir explícitamente a otros tipos (\texttt{int()}, \texttt{float()}).
+    \end{itemize}
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+char nombre[50];
+int edad;
+
+printf("Nombre: ");
+scanf("%s", nombre);
+
+printf("Edad: ");
+scanf("%d", &edad);
+
+printf("Hola %s\n", nombre);
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+# input() retorna string
+nombre = input("Nombre: ")
+
+# Convertimos a entero
+edad = int(input("Edad: "))
+
+print(f"Hola {nombre}")
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Lectura de Múltiples Valores}
+  \begin{block}{Técnica con split()}
+    Python puede leer varios valores en una línea usando \texttt{split()} y desempaquetado.
+  \end{block}
+
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+int a, b;
+
+printf("Dos numeros: ");
+scanf("%d %d", &a, &b);
+
+printf("Suma: %d\n", a + b);
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+# Leer y separar
+entrada = input("Dos numeros: ")
+a, b = entrada.split()
+
+# Convertir a enteros
+a = int(a)
+b = int(b)
+
+print(f"Suma: {a + b}")
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{5. Funciones y Parámetros}
+% ===============================================================
+
+\begin{frame}[fragile]{Definición de Funciones}
+  \begin{block}{Definición Simplificada}
+    En Python se usa la palabra clave \texttt{def}. No se declaran tipos de retorno ni de parámetros.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int sumar(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int res = sumar(10, 5);
+    // res es 15
+    return 0;
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+def sumar(a, b):
+    return a + b
+
+# --- Llamada ---
+res = sumar(10, 5)
+# res es 15
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paso de Parámetros: Mutabilidad}
+  \begin{alertblock}{Punto Clave}
+    \begin{itemize}
+      \item \textbf{C pasa copias (por valor).} Para modificar el original, se usan punteros (\texttt{*}).
+      \item \textbf{Python pasa referencias a objetos.}
+      \begin{itemize}
+        \item Objetos \textbf{inmutables} (números, strings) se comportan como paso por valor.
+        \item Objetos \textbf{mutables} (listas, diccionarios) se comportan como paso por referencia.
+      \end{itemize}
+      \item El resultado final en el ejemplo que sigue es idéntico en los dos lenguajes.
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{Paso de Parámetros: mismo resultado en los dos lenguajes}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+void mod(int num, int arr[]) {
+    num = 100;   // no cambia
+    arr[0] = 99; // SI cambia
+}
+
+// mi_numero -> 10
+// mi_array[0] -> 99
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+def mod(num, lista):
+    num = 100     # no cambia
+    lista[0] = 99 # SI cambia
+
+# mi_numero -> 10
+# mi_lista[0] -> 99
+      \end{minted}
+    \end{column}
+  \end{columns}
+  \vspace{0.4em}
+  {\footnotesize \textit{Por qué se parecen tanto: en C, un arreglo pasado
+  como parámetro ya decae a puntero — la \emph{dirección} se copia por
+  valor. Reasignar \texttt{arr} adentro de la función no movería el
+  arreglo del \texttt{main}, igual que reasignar \texttt{lista} en Python
+  no afecta a la variable de afuera. Lo que sí se comparte, en los dos
+  lenguajes, es lo que hay \emph{en} esa dirección.}}
+\end{frame}
+
+% ===============================================================
+\section{6. Resumen y Conclusiones}
+% ===============================================================
+
+\begin{frame}{Tabla Comparativa Rápida}
+  \begin{tabular}{|l|p{4cm}|p{4cm}|}
+    \hline
+    \textbf{Característica} & \textbf{Lenguaje C} & \textbf{Lenguaje Python} \\
+    \hline \hline
+    Tipado & Estático (fuerte) & Dinámico (fuerte) \\
+    \hline
+    Compilación & Compilado & Interpretado \\
+    \hline
+    Sintaxis & Verbosa, con \texttt{;} y \texttt{\{\}} & Concisa, basada en indentación \\
+    \hline
+    Manejo de Memoria & Manual (\texttt{malloc}, \texttt{free}) & Automático (Garbage Collector) \\
+    \hline
+    Punteros & Explícitos y fundamentales & No existen de forma directa \\
+    \hline
+    Bucle \texttt{for} & Basado en un contador & Basado en iteración sobre secuencias \\
+    \hline
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Lo que sigue}
+  \begin{block}{Con esto ya podés}
+    Traducir a Python cualquier programa de C que use solo variables,
+    condicionales, bucles y funciones con parámetros simples — la base de
+    los ejercicios 5 y 6 del TP4 (parking, batalla naval).
+  \end{block}
+  \begin{alertblock}{Presentación 2: Estructuras de Datos}
+    Para modelar los tres pisos del parking, el tablero de la batalla
+    naval, o el inventario de la librería, hace falta más que variables
+    sueltas: \textbf{listas, tuplas y diccionarios} — el equivalente
+    Python de los arreglos y \texttt{structs} de C. Eso es lo que viene.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \Huge \bfseries ¡A programar en Python!
+  \end{beamercolorbox}
+  \vfill
+\end{frame}
+
+\end{document}

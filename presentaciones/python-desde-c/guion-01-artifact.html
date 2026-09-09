@@ -1,0 +1,417 @@
+<title>Fundamentos: Python desde C</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --bg:#f7f5f1;
+    --surface:#ffffff;
+    --surface-2:#edeae2;
+    --text:#201d1a;
+    --text-dim:#6d6a63;
+    --border:#dfdbd1;
+    --accent:#2454c7;
+    --accent-ink:#ffffff;
+    --accent-soft:#e7edfb;
+    --tag-auto:#a8462f;
+    --tag-auto-soft:#f7e6e1;
+    --tag-section:#3c7a5c;
+    --tag-section-soft:#e3efe8;
+    --shadow: 0 1px 2px rgba(30,25,15,.04), 0 8px 24px -12px rgba(30,25,15,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171b;
+      --surface:#1b1f24;
+      --surface-2:#242a30;
+      --text:#eae7e0;
+      --text-dim:#9aa0a8;
+      --border:#2e343b;
+      --accent:#7c9dff;
+      --accent-ink:#0e1420;
+      --accent-soft:#20293e;
+      --tag-auto:#e2a08f;
+      --tag-auto-soft:#33211c;
+      --tag-section:#8ad1ab;
+      --tag-section-soft:#1c2b23;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14171b;
+    --surface:#1b1f24;
+    --surface-2:#242a30;
+    --text:#eae7e0;
+    --text-dim:#9aa0a8;
+    --border:#2e343b;
+    --accent:#7c9dff;
+    --accent-ink:#0e1420;
+    --accent-soft:#20293e;
+    --tag-auto:#e2a08f;
+    --tag-auto-soft:#33211c;
+    --tag-section:#8ad1ab;
+    --tag-section-soft:#1c2b23;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Public Sans', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    overscroll-behavior-y:none;
+  }
+  .mono{font-family:'JetBrains Mono', ui-monospace, monospace;}
+
+  code{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:.05em .35em;
+    font-size:.88em;
+    white-space:nowrap;
+  }
+
+  /* ---------- top bar ---------- */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:var(--bg);
+    padding:.7rem .9rem .55rem;
+    border-bottom:1px solid var(--border);
+  }
+  .top-row{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:.6rem; margin-bottom:.5rem;
+  }
+  .deck-name{
+    font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--text-dim); font-weight:600;
+  }
+  .counter{
+    font-family:'JetBrains Mono', monospace; font-size:.78rem;
+    color:var(--text-dim); font-variant-numeric:tabular-nums;
+    flex-shrink:0;
+  }
+  .progress-track{
+    height:4px; border-radius:99px; background:var(--surface-2);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:var(--accent); border-radius:99px;
+    transition:width .25s ease;
+  }
+  @media (prefers-reduced-motion: reduce){ .progress-fill{transition:none;} }
+
+  .mode-row{
+    display:flex; gap:.4rem; margin-top:.55rem;
+  }
+  .mode-btn{
+    font-family:'Public Sans', sans-serif; font-size:.78rem; font-weight:600;
+    padding:.32rem .7rem; border-radius:99px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text-dim); cursor:pointer;
+  }
+  .mode-btn[aria-pressed="true"]{
+    background:var(--accent); color:var(--accent-ink); border-color:var(--accent);
+  }
+
+  /* ---------- card view ---------- */
+  main{
+    flex:1; display:flex; flex-direction:column; min-height:0;
+    position:relative; overflow:hidden;
+  }
+  #cardStage{
+    flex:1; overflow-y:auto; padding:1.1rem .95rem 1.4rem;
+    -webkit-overflow-scrolling:touch;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; max-width:640px; margin:0 auto;
+    animation:enter .22s ease;
+  }
+  @keyframes enter{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .card{animation:none;} }
+
+  .tag-row{ display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; flex-wrap:wrap; }
+  .tag{
+    font-family:'JetBrains Mono', monospace; font-size:.68rem; font-weight:600;
+    letter-spacing:.03em; padding:.2rem .5rem; border-radius:6px;
+  }
+  .tag-section{ background:var(--tag-section-soft); color:var(--tag-section); }
+  .tag-auto{ background:var(--tag-auto-soft); color:var(--tag-auto); }
+  .slide-n{
+    font-family:'JetBrains Mono', monospace; font-size:.68rem; color:var(--text-dim);
+    margin-left:auto;
+  }
+
+  h1.card-title{
+    font-size:1.32rem; line-height:1.25; margin:.1rem 0 .75rem;
+    font-weight:800; text-wrap:balance;
+  }
+  .script{
+    font-size:1.05rem; line-height:1.62; color:var(--text);
+  }
+  .script.short{
+    font-style:italic; color:var(--text-dim); font-size:1rem;
+  }
+
+  /* ---------- bottom nav ---------- */
+  footer{
+    position:sticky; bottom:0; z-index:10;
+    background:var(--bg); border-top:1px solid var(--border);
+    padding:.6rem .9rem calc(.6rem + env(safe-area-inset-bottom));
+    display:flex; gap:.6rem;
+  }
+  .nav-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:.4rem;
+    font-family:'Public Sans', sans-serif; font-weight:700; font-size:.95rem;
+    padding:.7rem .8rem; border-radius:12px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text); cursor:pointer;
+  }
+  .nav-btn:disabled{ opacity:.35; cursor:default; }
+  .nav-btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .nav-btn svg{ width:1.05em; height:1.05em; }
+
+  /* ---------- list view ---------- */
+  #listStage{ display:none; flex:1; overflow-y:auto; padding:.9rem .8rem 1.4rem; }
+  .list-row{
+    display:flex; align-items:flex-start; gap:.65rem;
+    padding:.65rem .6rem; border-radius:10px; cursor:pointer;
+    max-width:640px; margin:0 auto;
+  }
+  .list-row:hover{ background:var(--surface-2); }
+  .list-n{
+    font-family:'JetBrains Mono', monospace; font-size:.78rem; color:var(--text-dim);
+    width:1.6em; flex-shrink:0; padding-top:.15rem; font-variant-numeric:tabular-nums;
+  }
+  .list-body .list-title{ font-weight:700; font-size:.92rem; margin-bottom:.1rem; }
+  .list-body .list-snip{
+    font-size:.82rem; color:var(--text-dim); line-height:1.4;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .list-row.current{ background:var(--accent-soft); }
+  .list-row.current .list-n{ color:var(--accent); font-weight:700; }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:99px; }
+</style>
+
+<header>
+  <div class="top-row">
+    <span class="deck-name">Python desde C · 1/3 · Fundamentos</span>
+    <span class="counter mono" id="counter">01 / 26</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="mode-row">
+    <button class="mode-btn" id="btnCard" aria-pressed="true">Tarjeta</button>
+    <button class="mode-btn" id="btnList" aria-pressed="false">Ver todo</button>
+  </div>
+</header>
+
+<main>
+  <div id="cardStage">
+    <article class="card" id="card"></article>
+  </div>
+  <div id="listStage"></div>
+</main>
+
+<footer id="cardFooter">
+  <button class="nav-btn" id="btnPrev">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Anterior
+  </button>
+  <button class="nav-btn primary" id="btnNext">
+    Siguiente
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var SLIDES = [
+    {n:1, sec:"Introducción", auto:false, title:"Título",
+     script:"Buenas a todos. Hoy arrancamos una serie de tres clases para pasar de C a Python. La buena noticia es que no estamos aprendiendo a programar de nuevo: todo lo que ya saben —variables, condicionales, bucles, funciones— sigue siendo válido. Lo que cambia es la sintaxis, y en algunos casos, cómo se resuelven las mismas ideas con menos código. Vamos a ir viendo todo por contraste: siempre C de un lado, Python del otro."},
+    {n:2, sec:"Introducción", auto:false, title:"Índice de Contenidos",
+     script:"Este es el mapa de la clase de hoy: primero sintaxis fundamental, después variables y tipos de datos, estructuras de control —los if y los bucles—, entrada de datos por teclado, funciones y parámetros, y cerramos con un resumen comparativo. Son seis bloques, todos cortos."},
+    {n:3, sec:"Introducción", auto:false, title:"Por qué cambiamos de lenguaje ahora",
+     script:"Quiero que quede clara una cosa antes de empezar: esto no es un curso de programación desde cero, ya programan. Lo que vamos a hacer es aprender la sintaxis de Python apoyándonos en lo que ya saben de C. Esta es la primera de tres presentaciones: hoy vemos los fundamentos —lo que necesitan para escribir cualquier programa simple—; en la segunda vamos a ver listas, tuplas y diccionarios, que son las estructuras de datos de Python, equivalentes a los arreglos y `structs` de C; y en la tercera, cadenas de texto más avanzadas, manejo de archivos y funciones más completas. Con las tres van a tener todo lo que necesitan para resolver la Parte B del TP4."},
+
+    {n:4, sec:"1. Sintaxis Fundamental", auto:true, title:"Índice — Sección 1",
+     script:"Arrancamos por el primer bloque: sintaxis fundamental."},
+    {n:5, sec:"1. Sintaxis Fundamental", auto:false, title:"¡Hola, Mundo!",
+     script:"Empecemos con el clásico “Hola, Mundo”. Miren el lado izquierdo: en C necesitamos incluir la librería de entrada y salida, declarar la función `main`, usar `printf` con su cadena de formato, terminar con punto y coma, y encima compilar antes de poder correrlo. Ahora miren Python: una sola línea, `print`, entre paréntesis el texto, y listo, ya lo pueden correr. Cuatro cosas para quedarse: Python es interpretado, no compila; no exige una función `main`; no usa punto y coma —es opcional y nadie lo usa—; y los bloques de código no se marcan con llaves, se marcan con la indentación. Ese último punto es tan importante que le dedico la próxima diapositiva entera."},
+    {n:6, sec:"1. Sintaxis Fundamental", auto:false, title:"Cuidado: la indentación es sintaxis",
+     script:"Esto no es un detalle de prolijidad, es sintaxis real. En C ustedes pueden indentar como quieran, o no indentar nada, y el programa compila igual —al compilador no le importa, solo mira las llaves. En Python la indentación ES la forma de decir qué línea pertenece a qué bloque. Miren el ejemplo: la primera línea después del `if`, con cuatro espacios, pertenece al `if` y se ejecuta. La segunda, que tiene un espacio de más, Python la interpreta como un bloque distinto y no sabe a qué pertenece — tira un error de indentación. Mi recomendación: configuren el editor para que use siempre espacios, nunca mezclen con tabs, eso genera estos errores todo el tiempo."},
+
+    {n:7, sec:"2. Variables y Tipos de Datos", auto:true, title:"Índice — Sección 2",
+     script:"Pasamos a variables y tipos de datos."},
+    {n:8, sec:"2. Variables y Tipos de Datos", auto:false, title:"Variables y Tipos de Datos",
+     script:"La diferencia principal acá es el tipado. En C ustedes tienen que declarar el tipo antes de usar la variable —`int`, `float`, lo que sea— y ese tipo queda fijo. En Python no declaran nada: el tipo se infiere automáticamente según el valor que le asignan. Si le asigno diez, es un entero; si le asigno noventa y cinco con cincuenta, es un flotante. Si en algún momento quieren saber qué tipo tiene una variable, existe la función `type()`."},
+    {n:9, sec:"2. Variables y Tipos de Datos", auto:false, title:"Cuidado: dinámico no es “sin tipo”",
+     script:"Ahora, cuidado con un malentendido muy común: que Python “no tiene tipos”. Eso es falso. Lo que pasa es que el mismo nombre de variable puede referirse a un entero en un momento y a un string en otro —eso es lo dinámico—. Pero en cualquier momento dado, esa variable SÍ tiene un tipo bien definido, y Python lo respeta estrictamente. Miren el ejemplo: si intento sumar el string `\"Tengo\"` con el entero `edad`, Python me tira un `TypeError`, exactamente como pasaría en C si mezclaran tipos incompatibles sin castear. La solución es la misma idea que un cast en C: convertir explícitamente, en este caso con `str(edad)`."},
+
+    {n:10, sec:"3. Estructuras de Control", auto:true, title:"Índice — Sección 3",
+     script:"Estructuras de control."},
+    {n:11, sec:"3. Estructuras de Control", auto:false, title:"Condicionales: if / elif / else",
+     script:"Acá el mapeo es casi directo. El `if` de C es `if` en Python. El `else if` se escribe todo junto, `elif`. Y el `else` queda igual. Lo que cambia: no hace falta paréntesis alrededor de la condición, y en vez de llaves se usan dos puntos más indentación. Importante: se ejecuta el PRIMER bloque cuya condición dé verdadero, y ahí termina, no sigue evaluando los demás. En el ejemplo, con `nota = 75`, no entra en el primero porque no es mayor o igual a 90, entra en el segundo porque sí es mayor o igual a 60, imprime “Aprobado”, y no llega a evaluar el `else`."},
+    {n:12, sec:"3. Estructuras de Control", auto:false, title:"Equivalente a Switch",
+     script:"Una pregunta que seguro se van a hacer: ¿y el `switch` de C? Python no tiene `switch-case` como estructura del lenguaje. La forma de lograr exactamente lo mismo es encadenar `if`, `elif`, `elif`... tantas veces como casos necesiten, con un `else` al final haciendo de `default`. Miren el ejemplo de los días de la semana: mismo resultado, misma lógica, un poco más de líneas que un `switch`, pero nada nuevo conceptualmente."},
+    {n:13, sec:"3. Estructuras de Control", auto:false, title:"Bucles: while",
+     script:"El `while` es prácticamente idéntico al de C. Se saca el paréntesis de la condición, y ojo con un detalle: Python no tiene el operador `++` ni `--`. Si en C escribían `i++`, en Python tienen que escribir `i += 1`."},
+    {n:14, sec:"3. Estructuras de Control", auto:false, title:"Bucles: for",
+     script:"Acá sí hay un cambio de filosofía, no solo de sintaxis. El `for` de C es un contador: ustedes arman a mano la inicialización, la condición de corte, y el incremento. El `for` de Python no funciona así — itera sobre una secuencia de valores, uno por uno. Entonces, ¿cómo hacemos para contar como en C? Usamos la función `range()`. `range(5)` genera la secuencia `0, 1, 2, 3, 4`, y el `for` va tomando cada uno de esos valores. Es la forma de simular el contador de C dentro de la lógica de iteración de Python."},
+    {n:15, sec:"3. Estructuras de Control", auto:false, title:"range() con inicio, fin y paso",
+     script:"`range()` es más flexible de lo que parece: acepta inicio, fin y paso. Así como en C pueden hacer un `for` que vaya de 10 a 1 restando de a uno, en Python hacen `range(10, 0, -1)` y `range` genera esa cuenta regresiva. Un detalle para recordar siempre: el valor de “fin” NUNCA se incluye en la secuencia, exactamente como la condición de corte de un `for` en C — ahí paramos, ese valor no se procesa."},
+
+    {n:16, sec:"4. Entrada de Datos desde Teclado", auto:true, title:"Índice — Sección 4",
+     script:"Entrada de datos desde teclado."},
+    {n:17, sec:"4. Entrada de Datos desde Teclado", auto:false, title:"Lectura de Datos: scanf vs input()",
+     script:"Para leer datos del usuario, en C usan `scanf`, con un especificador de formato como `%d` o `%s`, y tienen que pasar la dirección de memoria con el `&`. En Python usan `input()`, pero ojo: `input()` SIEMPRE devuelve un string, sin importar qué haya tipeado el usuario. Si necesitan que sea un número, tienen que convertir explícitamente con `int()` o `float()`. Miren el ejemplo: piden la edad con `input()`, y directamente envuelven eso con `int()` antes de guardarlo en la variable. Y de paso, noten el `print` con la `f` adelante — eso es un f-string, la forma moderna de armar strings con variables adentro, mucho más cómoda que ir concatenando con `+`."},
+    {n:18, sec:"4. Entrada de Datos desde Teclado", auto:false, title:"Lectura de Múltiples Valores",
+     script:"¿Qué pasa si necesito leer dos valores en una sola línea, como cuando en C hacían `scanf` con dos `%d` seguidos? En Python, leo la línea completa como un string con `input()`, la separo en pedazos con el método `.split()` —que por defecto separa por espacios—, y desempaqueto el resultado directamente en dos variables, `a` y `b`. Después convierto cada una a entero. Este patrón —leer, separar, desempaquetar, convertir— lo van a usar todo el tiempo en el TP4, por ejemplo para leer una coordenada de la batalla naval."},
+
+    {n:19, sec:"5. Funciones y Parámetros", auto:true, title:"Índice — Sección 5",
+     script:"Funciones y parámetros."},
+    {n:20, sec:"5. Funciones y Parámetros", auto:false, title:"Definición de Funciones",
+     script:"Para definir una función en Python se usa la palabra clave `def`. A diferencia de C, no declaran el tipo de retorno, ni el tipo de los parámetros — nada de eso. Solo el nombre de la función y el nombre de los parámetros. El cuerpo, indentado como cualquier bloque. Miren el ejemplo: la función `sumar` en C y en Python hacen exactamente lo mismo, con la sintaxis reducida a lo esencial en Python."},
+    {n:21, sec:"5. Funciones y Parámetros", auto:false, title:"Paso de Parámetros: Mutabilidad",
+     script:"Esta es la diapositiva más importante de hoy, así que les pido que le presten atención especial. En C, cuando pasan un parámetro a una función, se pasa una COPIA — si quieren que la función modifique el valor original, tienen que pasar un puntero. En Python la historia es distinta: lo que se pasa es una referencia al objeto. Pero acá hay un matiz clave: si el objeto es inmutable —un número, un string— se va a COMPORTAR como si fuera paso por valor, porque no se puede modificar en el lugar. Si el objeto es mutable —una lista, un diccionario— se va a comportar como paso por referencia, porque sí se puede modificar en el lugar. Se los muestro en código en la próxima diapositiva, con un ejemplo donde, contra lo que uno esperaría, el resultado final es exactamente el mismo en C y en Python."},
+    {n:22, sec:"5. Funciones y Parámetros", auto:false, title:"Paso de Parámetros: mismo resultado",
+     script:"Miren los dos códigos en paralelo. En los dos casos pasamos dos cosas: un número suelto, y un arreglo o lista. Dentro de la función reasignamos el número —y en ningún caso eso afecta a la variable de afuera—, ¿por qué? Porque reasignar es simplemente hacer que el nombre local apunte a otra cosa, no toca el original. Pero cuando modificamos la posición cero del arreglo o de la lista, en los dos casos SÍ se ve reflejado afuera. La explicación de fondo, y esto es lo interesante: en C, un arreglo pasado como parámetro YA es un puntero — lo que se copia por valor es la dirección de memoria, no el contenido. Reasignar esa variable local no mueve el arreglo original, pero escribir en esa dirección sí lo modifica. En Python pasa exactamente lo mismo con el concepto de referencia a objeto. Es la misma lógica, dos sintaxis distintas."},
+
+    {n:23, sec:"6. Resumen y Conclusiones", auto:true, title:"Índice — Sección 6",
+     script:"Cerramos con un resumen."},
+    {n:24, sec:"6. Resumen y Conclusiones", auto:false, title:"Tabla Comparativa Rápida",
+     script:"Repaso relámpago de todo lo que vimos hoy en una sola tabla: tipado estático contra dinámico, compilado contra interpretado, sintaxis verbosa con llaves y punto y coma contra sintaxis basada en indentación, manejo manual de memoria con `malloc` y `free` contra recolector de basura automático, punteros explícitos contra prácticamente inexistentes en Python, y el `for` basado en contador contra el `for` basado en iteración. Si tienen dudas de algo de esto, este es el momento, antes de pasar al cierre."},
+    {n:25, sec:"6. Resumen y Conclusiones", auto:false, title:"Lo que sigue",
+     script:"Con todo lo visto hoy ya pueden traducir a Python cualquier programa de C que use variables, condicionales, bucles y funciones simples — que es exactamente lo que necesitan para los ejercicios 5 y 6 del TP4, el parking inteligente y la batalla naval, al menos en su lógica básica. Pero para modelar los datos de esos ejercicios —los tres pisos del parking, el tablero de la batalla naval, el inventario de la librería— vamos a necesitar algo más que variables sueltas. Eso es exactamente el tema de la próxima clase: listas, tuplas y diccionarios, el equivalente en Python de los arreglos y los `structs` de C."},
+    {n:26, sec:"6. Resumen y Conclusiones", auto:false, title:"Cierre",
+     script:"Bueno, con esto cerramos la primera parte. Abrimos a preguntas, y después pasamos a la práctica en Colab para que empiecen a escribir código ustedes."}
+  ];
+
+  var TOTAL = SLIDES.length;
+  var idx = 0;
+
+  function loadIdx(){
+    try{
+      var v = parseInt(localStorage.getItem('guion01-idx'), 10);
+      if(!isNaN(v) && v >= 0 && v < TOTAL) return v;
+    }catch(e){}
+    return 0;
+  }
+  function saveIdx(i){
+    try{ localStorage.setItem('guion01-idx', String(i)); }catch(e){}
+  }
+
+  function renderInline(text){
+    var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return esc.replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  var cardEl = document.getElementById('card');
+  var counterEl = document.getElementById('counter');
+  var progressFill = document.getElementById('progressFill');
+  var btnPrev = document.getElementById('btnPrev');
+  var btnNext = document.getElementById('btnNext');
+  var cardStage = document.getElementById('cardStage');
+  var listStage = document.getElementById('listStage');
+  var cardFooter = document.getElementById('cardFooter');
+  var btnCard = document.getElementById('btnCard');
+  var btnList = document.getElementById('btnList');
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+  function renderCard(){
+    var s = SLIDES[idx];
+    var tagHtml = s.auto
+      ? '<span class="tag tag-auto">TRANSICIÓN</span><span class="tag tag-section">' + s.sec + '</span>'
+      : '<span class="tag tag-section">' + s.sec + '</span>';
+    cardEl.innerHTML =
+      '<div class="tag-row">' + tagHtml + '<span class="slide-n mono">Diapositiva ' + s.n + '</span></div>' +
+      '<h1 class="card-title">' + s.title + '</h1>' +
+      '<p class="script' + (s.auto ? ' short' : '') + '">' + renderInline(s.script) + '</p>';
+    cardEl.style.animation = 'none';
+    void cardEl.offsetWidth;
+    cardEl.style.animation = '';
+    counterEl.textContent = pad(s.n) + ' / ' + TOTAL;
+    progressFill.style.width = (s.n / TOTAL * 100) + '%';
+    btnPrev.disabled = idx === 0;
+    btnNext.disabled = idx === TOTAL - 1;
+    btnNext.innerHTML = (idx === TOTAL - 1)
+      ? 'Fin del guion'
+      : 'Siguiente <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+    saveIdx(idx);
+    cardStage.scrollTop = 0;
+  }
+
+  function renderList(){
+    var html = '';
+    for(var i=0;i<TOTAL;i++){
+      var s = SLIDES[i];
+      html += '<div class="list-row' + (i===idx?' current':'') + '" data-i="'+i+'">' +
+        '<span class="list-n mono">' + pad(s.n) + '</span>' +
+        '<div class="list-body"><div class="list-title">' + s.title + '</div>' +
+        '<div class="list-snip">' + renderInline(s.script) + '</div></div></div>';
+    }
+    listStage.innerHTML = html;
+    var rows = listStage.querySelectorAll('.list-row');
+    rows.forEach(function(row){
+      row.addEventListener('click', function(){
+        idx = parseInt(row.getAttribute('data-i'), 10);
+        renderCard();
+        setMode('card');
+      });
+    });
+  }
+
+  function goTo(newIdx){
+    if(newIdx < 0 || newIdx >= TOTAL) return;
+    idx = newIdx;
+    renderCard();
+  }
+
+  btnPrev.addEventListener('click', function(){ goTo(idx-1); });
+  btnNext.addEventListener('click', function(){ goTo(idx+1); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight') goTo(idx+1);
+    if(e.key === 'ArrowLeft') goTo(idx-1);
+  });
+
+  // swipe
+  var touchStartX = null, touchStartY = null;
+  cardStage.addEventListener('touchstart', function(e){
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, {passive:true});
+  cardStage.addEventListener('touchend', function(e){
+    if(touchStartX === null) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.5){
+      if(dx < 0) goTo(idx+1); else goTo(idx-1);
+    }
+    touchStartX = null; touchStartY = null;
+  }, {passive:true});
+
+  function setMode(mode){
+    var isCard = mode === 'card';
+    btnCard.setAttribute('aria-pressed', isCard ? 'true' : 'false');
+    btnList.setAttribute('aria-pressed', isCard ? 'false' : 'true');
+    cardStage.style.display = isCard ? 'block' : 'none';
+    listStage.style.display = isCard ? 'none' : 'block';
+    cardFooter.style.display = isCard ? 'flex' : 'none';
+    if(!isCard) renderList();
+  }
+  btnCard.addEventListener('click', function(){ setMode('card'); });
+  btnList.addEventListener('click', function(){ setMode('list'); });
+
+  idx = loadIdx();
+  renderCard();
+})();
+</script>

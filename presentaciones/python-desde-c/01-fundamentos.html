@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Python desde C 1/3: Fundamentos</title>
+
+	<link rel="stylesheet" href="../vendor/reveal.js/dist/reset.css">
+	<link rel="stylesheet" href="../vendor/reveal.js/dist/reveal.css">
+	<link rel="stylesheet" href="../vendor/reveal.js/dist/theme/white.css">
+	<link rel="stylesheet" href="../vendor/reveal.js/plugin/highlight/monokai.css">
+
+	<style>
+		/* Ajustes puntuales para lectura en proyector */
+		.reveal .slides section {
+			text-align: left;
+			height: 100%;
+			overflow-y: auto;
+		}
+		.reveal .slides section h1,
+		.reveal .slides section h2,
+		.reveal .slides section h3 {
+			text-align: left;
+		}
+		.reveal pre code {
+			font-size: 0.62em;
+			max-height: 480px;
+		}
+		.reveal .caution {
+			background: #fff3cd;
+			border-left: 6px solid #e0a800;
+			padding: 0.3em 0.8em;
+			margin: 0.4em 0;
+		}
+		.reveal .caution p { margin: 0.3em 0; }
+		.reveal .answer {
+			background: #e6f4ea;
+			border-left: 6px solid #2e7d32;
+			padding: 0.2em 0.8em;
+			margin-top: 0.4em;
+			font-size: 0.78em;
+		}
+		.reveal .answer p { margin: 0.25em 0; }
+		.reveal .answer ul,
+		.reveal .answer ol {
+			margin-top: 0.15em;
+			margin-bottom: 0.15em;
+		}
+		.reveal .answer li {
+			margin-bottom: 0.1em;
+		}
+		.reveal table { font-size: 0.62em; }
+		.reveal table th,
+		.reveal table td {
+			padding: 0.2em 0.4em;
+		}
+		.reveal ul, .reveal ol { display: block; }
+		.reveal section img.plain {
+			border: none;
+			box-shadow: none;
+			background: none;
+		}
+		.reveal .small { font-size: 0.65em; }
+		.reveal .kicker {
+			font-size: 0.5em;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #999;
+			margin-bottom: 0.4em;
+		}
+		.reveal .two-col {
+			display: flex;
+			gap: 1.2em;
+		}
+		.reveal .two-col > div { flex: 1; min-width: 0; }
+		.reveal .two-col h4 { margin-bottom: 0.2em; font-size: 0.7em; }
+	</style>
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$">
+				<textarea data-template>
+
+## INFORMÁTICA
+### Introducción a Python para Programadores de C
+#### 1/3 — Sintaxis, tipos, control de flujo y funciones
+
+<p class="small">UNCuyo – Facultad de Ingeniería</p>
+
+Note:
+Buenas a todos. Hoy arrancamos una serie de tres clases para pasar de C a Python.
+La buena noticia es que no estamos aprendiendo a programar de nuevo: todo lo que
+ya saben —variables, condicionales, bucles, funciones— sigue siendo válido. Lo que
+cambia es la sintaxis, y en algunos casos, cómo se resuelven las mismas ideas con
+menos código. Vamos a ir viendo todo por contraste: siempre C de un lado, Python
+del otro.
+
+---
+
+## Índice de contenidos
+
+1. Sintaxis fundamental
+2. Variables y tipos de datos
+3. Estructuras de control
+4. Entrada de datos desde teclado
+5. Funciones y parámetros
+6. Resumen y conclusiones
+
+Note:
+Este es el mapa de la clase de hoy: primero sintaxis fundamental, después
+variables y tipos de datos, estructuras de control —los if y los bucles—,
+entrada de datos por teclado, funciones y parámetros, y cerramos con un resumen
+comparativo. Son seis bloques, todos cortos.
+
+---
+
+## Por qué cambiamos de lenguaje ahora
+
+Ya conocés variables, tipos, condicionales, bucles y funciones — los mismos
+**conceptos** de siempre, pero sin compilar y con menos sintaxis. Esta serie se
+apoya todo el tiempo en lo que ya sabés de C para aprender Python por
+**contraste**, no por repetición.
+
+<div class="caution">
+
+**Esta es la presentación 1 de 3**
+
+1. **Fundamentos** (ésta): sintaxis, tipos, control, E/S, funciones.
+2. **Estructuras de datos**: listas, tuplas y diccionarios.
+3. **Cadenas, archivos y funciones avanzadas**.
+
+</div>
+
+Note:
+Quiero que quede clara una cosa antes de empezar: esto no es un curso de
+programación desde cero, ya programan. Lo que vamos a hacer es aprender la
+sintaxis de Python apoyándonos en lo que ya saben de C. Esta es la primera de
+tres presentaciones: hoy vemos los fundamentos —lo que necesitan para escribir
+cualquier programa simple—; en la segunda vamos a ver listas, tuplas y
+diccionarios, que son las estructuras de datos de Python, equivalentes a los
+arreglos y structs de C; y en la tercera, cadenas de texto más avanzadas, manejo
+de archivos y funciones más completas. Con las tres van a tener todo lo que
+necesitan para resolver la Parte B del TP4.
+
+---
+
+<p class="kicker">Sección 1 — Sintaxis fundamental</p>
+
+## ¡Hola, Mundo!
+
+- Python es interpretado, no requiere compilación explícita.
+- No hay función `main()` obligatoria.
+- El punto y coma `;` es opcional y no se usa.
+- Los bloques de código se definen por **indentación**, no por llaves `{}`.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+#include <stdio.h>
+
+int main() {
+    printf("Hola, Mundo!\n");
+    return 0;
+}
+```
+</div>
+<div>
+
+#### Python
+```python
+print("Hola, Mundo!")
+```
+</div>
+</div>
+
+Note:
+Empecemos con el clásico "Hola, Mundo". Miren el lado izquierdo: en C
+necesitamos incluir la librería de entrada y salida, declarar la función main,
+usar printf con su cadena de formato, terminar con punto y coma, y encima
+compilar antes de poder correrlo. Ahora miren Python: una sola línea, print,
+entre paréntesis el texto, y listo, ya lo pueden correr. Cuatro cosas para
+quedarse: Python es interpretado, no compila; no exige una función main; no usa
+punto y coma; y los bloques de código no se marcan con llaves, se marcan con la
+indentación. Ese último punto es tan importante que le dedico la próxima
+diapositiva entera.
+
+--
+
+### Cuidado: la indentación es sintaxis
+
+En C, la indentación es una convención visual — el compilador no la mira, solo
+le importan las llaves. En Python, la indentación **define** qué líneas
+pertenecen a qué bloque. Mezclar espacios y tabs, o indentar mal, es un error de
+sintaxis real (`IndentationError`).
+
+```python
+if 5 > 3:
+    print("Se ejecuta")   # pertenece al if (4 espacios)
+      print("Error!")     # IndentationError: indentado de mas
+```
+
+Note:
+Esto no es un detalle de prolijidad, es sintaxis real. En C ustedes pueden
+indentar como quieran, o no indentar nada, y el programa compila igual — al
+compilador no le importa, solo mira las llaves. En Python la indentación ES la
+forma de decir qué línea pertenece a qué bloque. Miren el ejemplo: la primera
+línea después del if, con cuatro espacios, pertenece al if y se ejecuta. La
+segunda, que tiene un espacio de más, Python la interpreta como un bloque
+distinto y no sabe a qué pertenece — tira un error de indentación. Mi
+recomendación: configuren el editor para que use siempre espacios, nunca
+mezclen con tabs, eso genera estos errores todo el tiempo.
+
+---
+
+<p class="kicker">Sección 2 — Variables y tipos de datos</p>
+
+## Variables y tipos de datos
+
+- **C es de tipado estático:** hay que declarar el tipo antes de usar la
+  variable (`int`, `float`, etc.).
+- **Python es de tipado dinámico:** el tipo se infiere automáticamente en el
+  momento de la asignación.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int cantidad = 10;
+float precio = 95.50;
+```
+</div>
+<div>
+
+#### Python
+```python
+# La variable toma el tipo
+# del valor asignado
+cantidad = 10
+precio = 95.50
+
+# type(cantidad) -> <class 'int'>
+```
+</div>
+</div>
+
+Note:
+La diferencia principal acá es el tipado. En C ustedes tienen que declarar el
+tipo antes de usar la variable, y ese tipo queda fijo. En Python no declaran
+nada: el tipo se infiere automáticamente según el valor que le asignan. Si le
+asigno diez, es un entero; si le asigno noventa y cinco con cincuenta, es un
+flotante. Si en algún momento quieren saber qué tipo tiene una variable, existe
+la función type().
+
+--
+
+### Cuidado: dinámico no es "sin tipo"
+
+"Dinámico" significa que el mismo *nombre* puede referirse a valores de
+distinto tipo en distintos momentos — no que Python ignore los tipos. Sigue
+siendo **fuertemente tipado**: no suma un `int` y un `str` sin conversión
+explícita, igual que C.
+
+```python
+x = 10        # x es int
+x = "diez"    # ahora x es str (valido, x cambio de tipo)
+
+edad = 20
+print("Tengo " + edad)        # TypeError: no se puede sumar str + int
+print("Tengo " + str(edad))   # correcto: conversion explicita
+```
+
+Note:
+Cuidado con un malentendido muy común: que Python "no tiene tipos". Eso es
+falso. Lo que pasa es que el mismo nombre de variable puede referirse a un
+entero en un momento y a un string en otro — eso es lo dinámico. Pero en
+cualquier momento dado, esa variable SÍ tiene un tipo bien definido, y Python
+lo respeta estrictamente. Miren el ejemplo: si intento sumar el string "Tengo"
+con el entero edad, Python me tira un TypeError, exactamente como pasaría en C
+si mezclaran tipos incompatibles sin castear. La solución es la misma idea que
+un cast en C: convertir explícitamente, en este caso con str(edad).
+
+---
+
+<p class="kicker">Sección 3 — Estructuras de control</p>
+
+## Condicionales: if / elif / else
+
+La estructura ejecuta **únicamente el primer bloque** cuya condición sea
+verdadera y luego sale por completo, ignorando el resto.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int nota = 75;
+
+if (nota >= 90) {
+    printf("Excelente\n");
+} else if (nota >= 60) {
+    printf("Aprobado\n");
+} else {
+    printf("Reprobado\n");
+}
+// Salida: Aprobado
+```
+</div>
+<div>
+
+#### Python
+```python
+nota = 75
+
+if nota >= 90:
+    print("Excelente")
+elif nota >= 60:
+    print("Aprobado")
+else:
+    print("Reprobado")
+# Salida: Aprobado
+```
+</div>
+</div>
+
+Note:
+Acá el mapeo es casi directo. El if de C es if en Python. El else if se
+escribe todo junto, elif. Y el else queda igual. Lo que cambia: no hace falta
+paréntesis alrededor de la condición, y en vez de llaves se usan dos puntos más
+indentación. Importante: se ejecuta el PRIMER bloque cuya condición dé
+verdadero, y ahí termina. En el ejemplo, con nota igual a 75, no entra en el
+primero porque no es mayor o igual a 90, entra en el segundo porque sí es mayor
+o igual a 60, imprime Aprobado, y no llega a evaluar el else.
+
+---
+
+## Equivalente a switch
+
+Python no tiene una estructura `switch-case` tradicional. El comportamiento
+idéntico se logra con una cadena `if/elif/else`.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int dia = 2;
+switch (dia) {
+    case 1: printf("Lunes\n"); break;
+    case 2: printf("Martes\n"); break;
+    default: printf("Otro dia\n");
+}
+```
+</div>
+<div>
+
+#### Python
+```python
+dia = 2
+if dia == 1:
+    print("Lunes")
+elif dia == 2:
+    print("Martes")
+else:
+    print("Otro dia")
+```
+</div>
+</div>
+
+Note:
+Una pregunta que seguro se van a hacer: ¿y el switch de C? Python no tiene
+switch-case como estructura del lenguaje. La forma de lograr exactamente lo
+mismo es encadenar if, elif, elif... tantas veces como casos necesiten, con un
+else al final haciendo de default. Miren el ejemplo de los días de la semana:
+mismo resultado, misma lógica, un poco más de líneas que un switch, pero nada
+nuevo conceptualmente.
+
+---
+
+## Bucles: while
+
+La lógica del `while` es idéntica. Cambian los detalles: sin paréntesis en la
+condición y sin el operador `i++`.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int i = 0;
+while (i < 5) {
+    printf("%d\n", i);
+    i++;
+}
+```
+</div>
+<div>
+
+#### Python
+```python
+i = 0
+while i < 5:
+    print(i)
+    i += 1
+```
+</div>
+</div>
+
+<p class="small"><em>Python no tiene <code>i++</code> ni <code>i--</code>: se usa <code>i += 1</code>.</em></p>
+
+Note:
+El while es prácticamente idéntico al de C. Se saca el paréntesis de la
+condición, y ojo con un detalle: Python no tiene el operador ++ ni --. Si en C
+escribían i++, en Python tienen que escribir i += 1.
+
+---
+
+## Bucles: for
+
+El `for` de C es un contador. El `for` de Python itera sobre secuencias. Para
+replicar el comportamiento de C, usamos `range()`.
+
+<div class="two-col">
+<div>
+
+#### C (contador)
+```c
+int i;
+for (i = 0; i < 5; i++) {
+    printf("%d\n", i);
+}
+```
+</div>
+<div>
+
+#### Python (iterador)
+```python
+# range(5) genera 0, 1, 2, 3, 4
+for i in range(5):
+    print(i)
+```
+</div>
+</div>
+
+Note:
+Acá sí hay un cambio de filosofía, no solo de sintaxis. El for de C es un
+contador: ustedes arman a mano la inicialización, la condición de corte, y el
+incremento. El for de Python itera sobre una secuencia de valores, uno por
+uno. Entonces, ¿cómo hacemos para contar como en C? Usamos la función range().
+range(5) genera la secuencia 0, 1, 2, 3, 4, y el for va tomando cada uno de
+esos valores. Es la forma de simular el contador de C dentro de la lógica de
+iteración de Python.
+
+---
+
+## `range()` con inicio, fin y paso
+
+`range(inicio, fin, paso)` — `fin` nunca se incluye, igual que la condición de
+corte de un `for` en C.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+for (int i = 10; i > 0; i--) {
+    printf("%d\n", i);
+}
+```
+</div>
+<div>
+
+#### Python
+```python
+for i in range(10, 0, -1):
+    print(i)
+```
+</div>
+</div>
+
+Note:
+range() es más flexible de lo que parece: acepta inicio, fin y paso. Así como
+en C pueden hacer un for que vaya de 10 a 1 restando de a uno, en Python hacen
+range(10, 0, -1) y range genera esa cuenta regresiva. Un detalle para recordar
+siempre: el valor de "fin" NUNCA se incluye en la secuencia, exactamente como
+la condición de corte de un for en C.
+
+---
+
+<p class="kicker">Sección 4 — Entrada de datos desde teclado</p>
+
+## Lectura de datos: scanf vs input()
+
+- En C usás `scanf()` con especificadores de formato.
+- En Python usás `input()`, que **siempre retorna un string**.
+- Hay que convertir explícitamente a otros tipos (`int()`, `float()`).
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+char nombre[50];
+int edad;
+
+printf("Nombre: ");
+scanf("%s", nombre);
+
+printf("Edad: ");
+scanf("%d", &edad);
+
+printf("Hola %s\n", nombre);
+```
+</div>
+<div>
+
+#### Python
+```python
+# input() retorna string
+nombre = input("Nombre: ")
+
+# Convertimos a entero
+edad = int(input("Edad: "))
+
+print(f"Hola {nombre}")
+```
+</div>
+</div>
+
+Note:
+Para leer datos del usuario, en C usan scanf, con un especificador de formato
+como %d o %s, y tienen que pasar la dirección de memoria con el &. En Python
+usan input(), pero ojo: input() SIEMPRE devuelve un string, sin importar qué
+haya tipeado el usuario. Si necesitan que sea un número, tienen que convertir
+explícitamente con int() o float(). Y de paso, noten el print con la f
+adelante — eso es un f-string, la forma moderna de armar strings con variables
+adentro, mucho más cómoda que ir concatenando con +.
+
+---
+
+## Lectura de múltiples valores
+
+Python puede leer varios valores en una línea usando `split()` y
+desempaquetado.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int a, b;
+
+printf("Dos numeros: ");
+scanf("%d %d", &a, &b);
+
+printf("Suma: %d\n", a + b);
+```
+</div>
+<div>
+
+#### Python
+```python
+# Leer y separar
+entrada = input("Dos numeros: ")
+a, b = entrada.split()
+
+# Convertir a enteros
+a = int(a)
+b = int(b)
+
+print(f"Suma: {a + b}")
+```
+</div>
+</div>
+
+Note:
+¿Qué pasa si necesito leer dos valores en una sola línea, como cuando en C
+hacían scanf con dos %d seguidos? En Python, leo la línea completa como un
+string con input(), la separo en pedazos con el método split() —que por
+defecto separa por espacios—, y desempaqueto el resultado directamente en dos
+variables, a y b. Después convierto cada una a entero. Este patrón lo van a
+usar todo el tiempo en el TP4, por ejemplo para leer una coordenada de la
+batalla naval.
+
+---
+
+<p class="kicker">Sección 5 — Funciones y parámetros</p>
+
+## Definición de funciones
+
+En Python se usa la palabra clave `def`. No se declaran tipos de retorno ni de
+parámetros.
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+int sumar(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int res = sumar(10, 5);
+    // res es 15
+    return 0;
+}
+```
+</div>
+<div>
+
+#### Python
+```python
+def sumar(a, b):
+    return a + b
+
+# --- Llamada ---
+res = sumar(10, 5)
+# res es 15
+```
+</div>
+</div>
+
+Note:
+Para definir una función en Python se usa la palabra clave def. A diferencia
+de C, no declaran el tipo de retorno, ni el tipo de los parámetros — nada de
+eso. Solo el nombre de la función y el nombre de los parámetros. Miren el
+ejemplo: la función sumar en C y en Python hacen exactamente lo mismo, con la
+sintaxis reducida a lo esencial en Python.
+
+---
+
+## Paso de parámetros: mutabilidad
+
+<div class="caution">
+
+- **C pasa copias (por valor).** Para modificar el original, se usan punteros (`*`).
+- **Python pasa referencias a objetos.**
+  - Objetos **inmutables** (números, strings) se comportan como paso por valor.
+  - Objetos **mutables** (listas, diccionarios) se comportan como paso por referencia.
+- El resultado final en el ejemplo que sigue es idéntico en los dos lenguajes.
+
+</div>
+
+Note:
+Esta es la diapositiva más importante de hoy, así que les pido que le presten
+atención especial. En C, cuando pasan un parámetro a una función, se pasa una
+COPIA — si quieren que la función modifique el valor original, tienen que
+pasar un puntero. En Python lo que se pasa es una referencia al objeto. Pero
+acá hay un matiz clave: si el objeto es inmutable —un número, un string— se va
+a COMPORTAR como si fuera paso por valor. Si el objeto es mutable —una lista,
+un diccionario— se va a comportar como paso por referencia. Se los muestro en
+código a continuación, con un ejemplo donde, contra lo que uno esperaría, el
+resultado final es exactamente el mismo en C y en Python.
+
+--
+
+### Paso de parámetros: mismo resultado en los dos lenguajes
+
+<div class="two-col">
+<div>
+
+#### C
+```c
+void mod(int num, int arr[]) {
+    num = 100;   // no cambia
+    arr[0] = 99; // SI cambia
+}
+
+// mi_numero -> 10
+// mi_array[0] -> 99
+```
+</div>
+<div>
+
+#### Python
+```python
+def mod(num, lista):
+    num = 100     # no cambia
+    lista[0] = 99 # SI cambia
+
+# mi_numero -> 10
+# mi_lista[0] -> 99
+```
+</div>
+</div>
+
+<div class="answer">
+
+Por qué se parecen tanto: en C, un arreglo pasado como parámetro ya decae a
+puntero — la *dirección* se copia por valor. Reasignar `arr` adentro de la
+función no movería el arreglo del `main`, igual que reasignar `lista` en
+Python no afecta a la variable de afuera. Lo que sí se comparte, en los dos
+lenguajes, es lo que hay *en* esa dirección.
+
+</div>
+
+Note:
+Miren los dos códigos en paralelo. Dentro de la función reasignamos el número
+—y en ningún caso eso afecta a la variable de afuera—, porque reasignar es
+simplemente hacer que el nombre local apunte a otra cosa, no toca el original.
+Pero cuando modificamos la posición cero del arreglo o de la lista, en los dos
+casos SÍ se ve reflejado afuera. La explicación de fondo: en C, un arreglo
+pasado como parámetro YA es un puntero — lo que se copia por valor es la
+dirección de memoria, no el contenido. En Python pasa exactamente lo mismo con
+el concepto de referencia a objeto. Es la misma lógica, dos sintaxis
+distintas.
+
+---
+
+<p class="kicker">Sección 6 — Resumen y conclusiones</p>
+
+## Tabla comparativa rápida
+
+| Característica | Lenguaje C | Lenguaje Python |
+|---|---|---|
+| Tipado | Estático (fuerte) | Dinámico (fuerte) |
+| Compilación | Compilado | Interpretado |
+| Sintaxis | Verbosa, con `;` y `{}` | Concisa, basada en indentación |
+| Manejo de memoria | Manual (`malloc`, `free`) | Automático (garbage collector) |
+| Punteros | Explícitos y fundamentales | No existen de forma directa |
+| Bucle `for` | Basado en un contador | Basado en iteración sobre secuencias |
+
+Note:
+Repaso relámpago de todo lo que vimos hoy en una sola tabla: tipado estático
+contra dinámico, compilado contra interpretado, sintaxis verbosa con llaves y
+punto y coma contra sintaxis basada en indentación, manejo manual de memoria
+con malloc y free contra recolector de basura automático, punteros explícitos
+contra prácticamente inexistentes en Python, y el for basado en contador
+contra el for basado en iteración. Si tienen dudas de algo de esto, este es el
+momento, antes de pasar al cierre.
+
+---
+
+## Lo que sigue
+
+Con esto ya podés traducir a Python cualquier programa de C que use variables,
+condicionales, bucles y funciones con parámetros simples — la base de los
+ejercicios 5 y 6 del TP4 (parking, batalla naval).
+
+<div class="caution">
+
+**Presentación 2: estructuras de datos**
+
+Para modelar los tres pisos del parking, el tablero de la batalla naval, o el
+inventario de la librería, hace falta más que variables sueltas: **listas,
+tuplas y diccionarios** — el equivalente Python de los arreglos y `structs` de
+C. Eso es lo que viene.
+
+</div>
+
+Note:
+Con todo lo visto hoy ya pueden traducir a Python cualquier programa de C que
+use variables, condicionales, bucles y funciones simples — la base de los
+ejercicios 5 y 6 del TP4. Pero para modelar los datos de esos ejercicios vamos
+a necesitar algo más que variables sueltas. Eso es exactamente el tema de la
+próxima clase: listas, tuplas y diccionarios, el equivalente en Python de los
+arreglos y los structs de C.
+
+---
+
+## A trabajar
+
+¡A programar en Python! Dudas puntuales, levanten la mano.
+
+Abrimos la notebook de Colab y arrancamos con los primeros ejercicios.
+
+Note:
+Bueno, con esto cerramos la primera parte. Abrimos a preguntas, y después
+pasamos a la práctica en Colab para que empiecen a escribir código ustedes.
+
+				</textarea>
+			</section>
+		</div>
+	</div>
+
+	<script src="../vendor/reveal.js/dist/reveal.js"></script>
+	<script src="../vendor/reveal.js/plugin/markdown/markdown.js"></script>
+	<script src="../vendor/reveal.js/plugin/highlight/highlight.js"></script>
+	<script>
+		Reveal.initialize({
+			hash: true,
+			controls: true,
+			progress: true,
+			slideNumber: true,
+			center: false,
+			transition: 'slide',
+			width: 1000,
+			height: 820,
+			margin: 0.06,
+			plugins: [ RevealMarkdown, RevealHighlight ]
+		});
+	</script>
+</body>
+</html>

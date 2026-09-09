@@ -1,0 +1,336 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Presentacion 2/3: Estructuras de Datos en Python
+% Serie "Python desde C" - TP4 Parte B (UNCuyo - Informatica y Programacion)
+% Compilar con: pdflatex -shell-escape 02-estructuras-de-datos.tex  (dos pasadas)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{beamer}
+
+% Paquetes basicos
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% Paquete para el resaltado de codigo de alta calidad
+\usepackage{minted}
+
+% Tema visual de la presentacion
+\usetheme{Madrid}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}
+
+% Recapitula el indice, resaltando la seccion actual, al empezar cada seccion
+\AtBeginSection[]{
+  \begin{frame}{Indice de Contenidos}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+% --- Informacion del Titulo ---
+\title[Python desde C -- 2/3]{Estructuras de Datos en Python}
+\subtitle{2/3 -- Listas, tuplas y diccionarios (vs. arreglos y structs de C)}
+\author{Informática y Programación}
+\date{\today}
+\institute{UNCuyo -- Facultad de Ingeniería}
+
+% --- Inicio del Documento ---
+\begin{document}
+
+% --- Diapositiva del Titulo ---
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% --- Diapositiva del Indice ---
+\begin{frame}{Índice de Contenidos}
+  \tableofcontents
+\end{frame}
+
+\begin{frame}{Dónde estamos}
+  \begin{block}{Ya vimos (Presentación 1)}
+    Sintaxis, tipos, condicionales, bucles, entrada de datos y funciones
+    con parámetros simples.
+  \end{block}
+  \begin{alertblock}{Lo que falta para resolver el TP4}
+    Con variables sueltas alcanza para poco: los tres pisos del parking,
+    el tablero de la batalla naval, el inventario de la librería, todos
+    necesitan agrupar datos. En C eso se resuelve con \texttt{arreglos} y
+    \texttt{structs}. En Python: \textbf{listas, tuplas y diccionarios}.
+  \end{alertblock}
+\end{frame}
+
+% ===============================================================
+\section{1. Listas}
+% ===============================================================
+
+\begin{frame}[fragile]{Listas vs. arreglos de C}
+  \begin{block}{Diferencia Principal: Tamaño}
+    \begin{itemize}
+      \item \textbf{Un arreglo de C tiene tamaño fijo}, decidido al declararlo (o al reservar memoria con \texttt{malloc}).
+      \item \textbf{Una lista de Python crece y se achica sola}: \texttt{append}, \texttt{insert}, \texttt{remove} cambian su tamaño en tiempo de ejecución, sin \texttt{malloc}/\texttt{realloc}.
+    \end{itemize}
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int notas[3] = {8, 5, 9};
+int n = 3; // tamanio fijo
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+notas = [8, 5, 9]
+notas.append(7)
+# notas -> [8, 5, 9, 7]
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Indexado, \texttt{len()} y slicing}
+  \begin{block}{\texttt{len()} en vez de llevar la cuenta a mano}
+    En C solés guardar el tamaño en una variable aparte (\texttt{n}). En
+    Python, \texttt{len(lista)} siempre está actualizado. El slicing
+    (\texttt{lista[a:b]}) no tiene equivalente directo en C.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+notas = [8, 5, 9, 7]
+
+print(notas[0])     # primer elemento: 8
+print(notas[-1])    # ultimo elemento: 7 (no existe en C)
+print(len(notas))   # cantidad de elementos: 4
+print(notas[1:3])   # sublista: [5, 9]
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Recorrer una lista}
+  \begin{block}{Dos formas, según si necesitás el índice}
+    Si no necesitás la posición, \texttt{for elemento in lista} es más
+    directo que el \texttt{for} de C. Si necesitás el índice, \texttt{range(len(...))} lo replica.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+int notas[3] = {8, 5, 9};
+for (int i = 0; i < 3; i++) {
+    printf("%d\n", notas[i]);
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+notas = [8, 5, 9]
+for nota in notas:
+    print(nota)
+
+# con indice, si hace falta:
+for i in range(len(notas)):
+    print(i, notas[i])
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Cuidado: aliasing con listas mutables}
+  \begin{alertblock}{El bug más común al armar matrices en Python}
+    Multiplicar una lista con \texttt{*} no copia sus elementos si son a
+    su vez listas: \texttt{[[0]*4]*4} crea \textbf{4 referencias a la
+    misma fila}, no 4 filas independientes. Modificar una, modifica las
+    cuatro. No tiene equivalente en C: \texttt{int t[4][4]} siempre
+    reserva memoria contigua real, fila por fila.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{Aliasing: el ejemplo (tablero de la batalla naval)}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+# mal: las 4 filas son la MISMA lista, repetida por referencia
+tablero = [[0] * 4] * 4
+tablero[0][0] = 9
+# tablero[1][0], [2][0] y [3][0] tambien cambiaron a 9!
+
+# bien: una lista nueva por cada fila
+tablero = [[0] * 4 for _ in range(4)]
+tablero[0][0] = 9
+# solo tablero[0][0] cambio
+  \end{minted}
+\end{frame}
+
+% ===============================================================
+\section{2. Tuplas}
+% ===============================================================
+
+\begin{frame}[fragile]{Tuplas: listas inmutables}
+  \begin{block}{Se parecen a una lista, pero no se pueden modificar}
+    Se escriben con paréntesis y, una vez creadas, no se les puede
+    agregar, quitar ni reasignar elementos — como un arreglo de C
+    declarado \texttt{const}, pero sin tamaño fijo previo.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+punto = (3, 4)
+print(punto[0])   # 3
+
+punto[0] = 5      # TypeError: no se puede modificar una tupla
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Retorno múltiple: el verdadero motivo para usarlas}
+  \begin{alertblock}{En C, devolver más de un valor es incómodo}
+    Una función en C solo devuelve \textbf{un} valor con \texttt{return}.
+    Para devolver varios hay que usar punteros de salida (parámetros que
+    la función modifica) o empaquetarlos en un \texttt{struct}.
+  \end{alertblock}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C (punteros de salida)}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+void minmax(int v[], int n,
+            int *min, int *max) {
+    *min = *max = v[0];
+    for (int i = 1; i < n; i++) {
+        if (v[i] < *min) *min = v[i];
+        if (v[i] > *max) *max = v[i];
+    }
+}
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python (tupla)}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+def minmax(v):
+    return min(v), max(v)
+
+# desempaquetado directo:
+lo, hi = minmax([8, 5, 9, 7])
+# lo -> 5, hi -> 9
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{3. Diccionarios}
+% ===============================================================
+
+\begin{frame}[fragile]{Diccionarios vs. structs de C}
+  \begin{block}{Campos fijos vs. claves dinámicas}
+    \begin{itemize}
+      \item Un \texttt{struct} de C define sus campos \textbf{en tiempo
+      de compilación} — no se pueden agregar campos nuevos mientras corre el programa.
+      \item Un \texttt{dict} de Python asocia claves con valores \textbf{en
+      tiempo de ejecución} — se pueden agregar, quitar o consultar claves libremente.
+    \end{itemize}
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+typedef struct {
+    int codigo;
+    char nombre[50];
+    float precio;
+    int stock;
+} Libro;
+
+Libro l = {1, "Rayuela",
+           15000.0, 10};
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+libro = {
+    "codigo": 1,
+    "nombre": "Rayuela",
+    "autor": "Cortazar",
+    "precio": 15000.0,
+    "stock": 10,
+}
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Usar y recorrer un diccionario}
+  \begin{block}{Acceso por clave, no por índice}
+    Se lee y escribe con \texttt{d["clave"]}, no con una posición numérica.
+    Para recorrer todo el contenido, \texttt{.items()} da clave y valor juntos.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+libro = {"codigo": 1, "nombre": "Rayuela", "stock": 10}
+
+print(libro["nombre"])     # Rayuela
+libro["stock"] -= 2        # vender 2 unidades
+
+for clave, valor in libro.items():
+    print(clave, "->", valor)
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]{Inventario completo: lista de diccionarios}
+  \begin{block}{El patrón para el ejercicio 3 del TP4}
+    Un \texttt{struct Libro[]} en C es una lista de diccionarios en
+    Python: cada libro es un \texttt{dict}, y el inventario entero es una
+    \texttt{list} de esos \texttt{dict}.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+inventario = [
+    {"codigo": 1, "nombre": "Rayuela", "stock": 10},
+    {"codigo": 2, "nombre": "El Aleph", "stock": 3},
+]
+
+for libro in inventario:
+    print(libro["codigo"], libro["nombre"], libro["stock"])
+  \end{minted}
+\end{frame}
+
+% ===============================================================
+\section{4. Resumen y Conclusiones}
+% ===============================================================
+
+\begin{frame}{Tabla Comparativa Rápida}
+  \small
+  \begin{tabular}{|p{2.6cm}|p{3.4cm}|p{3.4cm}|}
+    \hline
+    \textbf{Necesito...} & \textbf{Lenguaje C} & \textbf{Lenguaje Python} \\
+    \hline \hline
+    Colección de tamaño fijo & \texttt{int v[N]} & lista (aunque no cambie de tamaño) \\
+    \hline
+    Colección que crece & \texttt{malloc}/\texttt{realloc} & lista con \texttt{append} \\
+    \hline
+    Colección inmutable & \texttt{const int v[N]} & tupla \\
+    \hline
+    Registro con campos fijos & \texttt{struct} & diccionario \\
+    \hline
+    Devolver varios valores & Punteros de salida o \texttt{struct} & tupla (\texttt{return a, b}) \\
+    \hline
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Lo que sigue}
+  \begin{block}{Con esto ya podés}
+    Modelar los pisos del parking (listas), el tablero de la batalla naval
+    (listas anidadas), y el inventario de la librería (lista de
+    diccionarios) — la base de los ejercicios 5, 6 y 3 del TP4.
+  \end{block}
+  \begin{alertblock}{Presentación 3: Cadenas, Archivos y Funciones Avanzadas}
+    Falta lo que necesitan Wordle (comparar letra por letra), el Juego de
+    la Vida (recorrer una grilla) y las estadísticas del archivo de texto
+    (leer un \texttt{.txt} y contar palabras): \textbf{manejo avanzado de
+    cadenas, lectura de archivos y funciones con retorno de colecciones}.
+    Eso es lo que viene.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \Huge \bfseries ¡A programar en Python!
+  \end{beamercolorbox}
+  \vfill
+\end{frame}
+
+\end{document}

@@ -1,0 +1,400 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Presentacion 3/3: Cadenas, Archivos y Funciones Avanzadas en Python
+% Serie "Python desde C" - TP4 Parte B (UNCuyo - Informatica y Programacion)
+% Compilar con: pdflatex -shell-escape 03-cadenas-archivos-funciones.tex  (dos pasadas)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{beamer}
+
+% Paquetes basicos
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% Paquete para el resaltado de codigo de alta calidad
+\usepackage{minted}
+
+% Tema visual de la presentacion
+\usetheme{Madrid}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}
+
+% Recapitula el indice, resaltando la seccion actual, al empezar cada seccion
+\AtBeginSection[]{
+  \begin{frame}{Indice de Contenidos}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+% --- Informacion del Titulo ---
+\title[Python desde C -- 3/3]{Cadenas, Archivos y Funciones Avanzadas en Python}
+\subtitle{3/3 -- De cadenas y \texttt{string.h} a \texttt{open()} y \texttt{stdio.h}}
+\author{Informática y Programación}
+\date{\today}
+\institute{UNCuyo -- Facultad de Ingeniería}
+
+% --- Inicio del Documento ---
+\begin{document}
+
+% --- Diapositiva del Titulo ---
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% --- Diapositiva del Indice ---
+\begin{frame}{Índice de Contenidos}
+  \tableofcontents
+\end{frame}
+
+\begin{frame}{El cierre de la serie}
+  \begin{block}{Dónde estamos}
+    \begin{enumerate}
+      \item Fundamentos: sintaxis, tipos, control, E/S, funciones.
+      \item Estructuras de datos: listas, tuplas y diccionarios.
+      \item \textbf{Cadenas, archivos y funciones avanzadas} (ésta).
+    \end{enumerate}
+  \end{block}
+  \begin{alertblock}{Para qué sirve esta última parte}
+    Cierra lo que falta para el ejercicio 7 (Wordle, manipulación de
+    cadenas) y resuelve directamente el ejercicio 9 del TP4: leer un
+    archivo de texto y calcular estadísticas sobre su contenido.
+  \end{alertblock}
+\end{frame}
+
+
+% ===============================================================
+\section{1. Cadenas: Indexado y Slicing}
+% ===============================================================
+
+\begin{frame}[fragile]{Acceder a un carácter}
+  \begin{block}{Misma idea, mismo símbolo}
+    En los dos lenguajes una cadena se indexa como un arreglo: posición
+    \texttt{0} es el primer carácter.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{c}
+char s[] = "Hola";
+printf("%c\n", s[0]);
+// Imprime: H
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+s = "Hola"
+print(s[0])
+# Imprime: H
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Obtener una subcadena: \texttt{slicing}}
+  \begin{block}{Acá empiezan a distanciarse}
+    Python tiene \texttt{slicing} incorporado al lenguaje:
+    \texttt{s[inicio:fin]}. En C no existe — hay que armar la subcadena a
+    mano, carácter por carácter.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+char s[] = "Programacion";
+char sub[4];
+for (int i = 0; i < 3; i++)
+    sub[i] = s[2 + i];
+sub[3] = '\0';
+// sub = "ogr"
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+s = "Programacion"
+sub = s[2:5]
+# sub = "ogr"
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Bonus: invertir una cadena}
+  \begin{block}{\texttt{s[::-1]}: paso negativo}
+    El tercer valor del slice es el \textbf{paso}. Con paso \texttt{-1},
+    Python recorre la cadena de atrás para adelante — útil para, por
+    ejemplo, verificar palíndromos (ya lo hicieron en C, en el TP3, con
+    recursión).
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+int n = strlen(s);
+for (int i = n - 1; i >= 0; i--)
+    putchar(s[i]);
+// recorrido manual
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+s = "Hola"
+print(s[::-1])
+# Imprime: aloH
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{2. Cadenas Inmutables}
+% ===============================================================
+
+\begin{frame}{Las cadenas en Python no se pueden modificar}
+  \begin{alertblock}{Contraintuitivo viniendo de C}
+    En C, \texttt{s} es un arreglo de \texttt{char}: cada posición se
+    puede reescribir libremente (\texttt{s[0] = 'X';}). En Python, un
+    \texttt{str} es \textbf{inmutable} — una vez creado, ningún carácter
+    se puede cambiar en el lugar. Cualquier operación que ``modifica'' una
+    cadena en realidad \textbf{crea una cadena nueva}.
+  \end{alertblock}
+  \begin{block}{Por qué importa}
+    Es la razón por la que \texttt{s = s + "algo"} o \texttt{s[2:5]} no
+    tocan la cadena original: siempre devuelven una cadena distinta.
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{El error típico y cómo evitarlo}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C (válido)}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+char s[] = "Hola";
+s[0] = 'h';
+printf("%s\n", s);
+// Imprime: hola
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python (error)}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+s = "Hola"
+s[0] = 'h'
+# TypeError: 'str' object
+# does not support item
+# assignment
+      \end{minted}
+    \end{column}
+  \end{columns}
+  \vspace{0.4em}
+  \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+s = "Hola"
+s = "h" + s[1:]   # se arma una cadena nueva
+print(s)           # Imprime: hola
+  \end{minted}
+\end{frame}
+
+% ===============================================================
+\section{3. Métodos de Cadena}
+% ===============================================================
+
+\begin{frame}{Lo que en C es una función suelta, en Python es un método}
+  \begin{block}{\texttt{cadena.metodo()} en vez de \texttt{funcion(cadena)}}
+    \texttt{\textless string.h\textgreater} da funciones que reciben la cadena como parámetro;
+    Python las expone como métodos del propio \texttt{str}.
+  \end{block}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Python} & \textbf{Equivalente aproximado en C} \\
+    \hline \hline
+    \texttt{s.upper()} / \texttt{s.lower()} & bucle manual con \texttt{toupper}/\texttt{tolower} \\
+    \hline
+    \texttt{s.strip()} & recorrer y descartar espacios en los bordes \\
+    \hline
+    \texttt{s.split(sep)} & \texttt{strtok()} (con estado global, más delicado) \\
+    \hline
+    \texttt{sep.join(lista)} & concatenar a mano con \texttt{strcat()} \\
+    \hline
+    \texttt{s.count(sub)} & bucle manual buscando ocurrencias \\
+    \hline
+    \texttt{s.replace(a, b)} & sin equivalente directo, se arma a mano \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{split()} y \texttt{join()}: separar y armar}
+  \begin{block}{Los inversos el uno del otro}
+    \texttt{split()} separa una cadena en una lista; \texttt{join()} hace
+    lo opuesto: une una lista en una única cadena, con un separador.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+frase = "el perro come carne"
+palabras = frase.split()          # ['el', 'perro', 'come', 'carne']
+
+reconstruida = "-".join(palabras) # "el-perro-come-carne"
+  \end{minted}
+  {\footnotesize \textit{En C, la función equivalente es \texttt{strtok()}
+  — funciona, pero modifica la cadena original y guarda estado entre
+  llamadas, lo que la hace más propensa a errores que \texttt{split()}.}}
+\end{frame}
+
+% ===============================================================
+\section{4. Manejo de Archivos}
+% ===============================================================
+
+\begin{frame}{Abrir y cerrar: \texttt{open()} + \texttt{with} vs. \texttt{fopen}/\texttt{fclose}}
+  \begin{alertblock}{El mismo riesgo que con \texttt{malloc}/\texttt{free}}
+    En C, todo \texttt{fopen()} exitoso necesita su \texttt{fclose()} —
+    olvidarlo dejar el archivo abierto es un descuido parecido a olvidar
+    un \texttt{free()} en el TP3 (Parte 2).
+  \end{alertblock}
+  \begin{block}{El bloque \texttt{with} de Python}
+    \texttt{with open(...) as f:} cierra el archivo automáticamente al
+    salir del bloque, \textbf{incluso si ocurre un error adentro}. No hay
+    equivalente automático en C: el \texttt{fclose()} hay que escribirlo
+    siempre a mano.
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Abrir, leer todo el contenido y cerrar}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+FILE *f = fopen("a.txt", "r");
+if (f == NULL) {
+    return 1; // error
+}
+char buf[256];
+fread(buf, 1, 255, f);
+fclose(f); // obligatorio
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+with open("a.txt") as f:
+    contenido = f.read()
+
+# el archivo ya esta
+# cerrado aca afuera
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Leer línea por línea}
+  \begin{block}{Iterar el archivo directamente}
+    Un archivo abierto con \texttt{open()} es iterable: cada vuelta del
+    \texttt{for} entrega la siguiente línea, sin manejar buffers a mano.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{.48\textwidth}
+      \centering\textbf{C}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{c}
+char linea[256];
+FILE *f = fopen("a.txt", "r");
+while (fgets(linea, 256, f)) {
+    printf("%s", linea);
+}
+fclose(f);
+      \end{minted}
+    \end{column}
+    \begin{column}{.48\textwidth}
+      \centering\textbf{Python}
+      \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+with open("a.txt") as f:
+    for linea in f:
+        print(linea, end="")
+      \end{minted}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{5. Funciones Avanzadas}
+% ===============================================================
+
+\begin{frame}[fragile]{Parámetros con valor por defecto}
+  \begin{block}{Algo que C no tiene}
+    Python permite que un parámetro tenga un valor si quien llama no lo
+    especifica. En C no existe esto: todos los argumentos se pasan
+    siempre, o se define una función distinta para cada caso.
+  \end{block}
+  \begin{minted}[fontsize=\small, frame=lines, linenos]{python}
+def calcular_tarifa(horas, tarifa_por_hora=1000):
+    return horas * tarifa_por_hora
+
+calcular_tarifa(3)         # usa tarifa_por_hora=1000 -> 3000
+calcular_tarifa(3, 2000)   # la pisa -> 6000
+  \end{minted}
+  {\footnotesize \textit{Repaso rápido: el retorno múltiple con tuplas
+  (\texttt{return a, b}) ya lo vimos en la presentación 2 — es la otra
+  herramienta clave para funciones más expresivas que en C.}}
+\end{frame}
+
+% ===============================================================
+\section{6. Caso Aplicado y Resumen}
+% ===============================================================
+
+\begin{frame}[fragile]{Caso aplicado: palabra más repetida (TP4, ej. 9)}
+  \begin{block}{Contar frecuencia de palabras con un diccionario}
+    Recorrer las palabras y, por cada una, sumar 1 a su contador en un
+    diccionario — \texttt{dict.get(clave, 0)} devuelve \texttt{0} si la
+    clave todavía no existe, evitando un \texttt{if} extra.
+  \end{block}
+  \begin{minted}[fontsize=\footnotesize, frame=lines, linenos]{python}
+frecuencia = {}
+for palabra in palabras:
+    if len(palabra) > 6:
+        frecuencia[palabra] = frecuencia.get(palabra, 0) + 1
+
+# la(s) palabra(s) con mayor frecuencia:
+maximo = max(frecuencia.values())
+mas_repetidas = [p for p, c in frecuencia.items() if c == maximo]
+  \end{minted}
+\end{frame}
+
+\begin{frame}{Tabla Comparativa Final}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{|l|p{4cm}|p{4cm}|}
+    \hline
+    \textbf{Característica} & \textbf{Lenguaje C} & \textbf{Lenguaje Python} \\
+    \hline \hline
+    Cadenas & Arreglo de \texttt{char} mutable, con \texttt{'\textbackslash0'} & \texttt{str} inmutable, con métodos propios \\
+    \hline
+    Archivos & \texttt{fopen}/\texttt{fclose} manual & \texttt{with open(...)} con cierre automático \\
+    \hline
+    Manejo de recursos & Responsabilidad del programador & Garbage collector + \texttt{with} \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Con esto ya tenés todo el TP4}
+  \begin{block}{Parte A}
+    Análisis, entradas/salidas y diseño de funciones — ya lo resolvieron
+    en C y pseudocódigo.
+  \end{block}
+  \begin{block}{Parte B}
+    Variables, control de flujo, funciones (presentación 1); listas,
+    tuplas y diccionarios (presentación 2); cadenas, archivos y funciones
+    avanzadas (ésta) — todo lo necesario para los ejercicios 5 a 9.
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \Huge \bfseries ¡A resolver el TP4!
+  \end{beamercolorbox}
+  \vfill
+\end{frame}
+
+\end{document}

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TP4 - Diagramas de flujo y pseudocódigo</title>
+<style>
+  :root {
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-2: #EDF1F6;
+    --ink: #1B2430;
+    --muted: #5B6B7C;
+    --line: #D7DEE6;
+    --accent: #2B6CB0;
+    --accent-soft: #DCEBFB;
+    --on-accent: #FFFFFF;
+    --code-bg: #101720;
+    --code-ink: #DCE7F2;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151C;
+      --surface: #171E27;
+      --surface-2: #1D2530;
+      --ink: #E8EDF3;
+      --muted: #96A7B9;
+      --line: #2A3542;
+      --accent: #6CA6E8;
+      --accent-soft: #1E3A56;
+      --on-accent: #0E1620;
+      --code-bg: #0B1017;
+      --code-ink: #CBD9E8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151C;
+    --surface: #171E27;
+    --surface-2: #1D2530;
+    --ink: #E8EDF3;
+    --muted: #96A7B9;
+    --line: #2A3542;
+    --accent: #6CA6E8;
+    --accent-soft: #1E3A56;
+    --on-accent: #0E1620;
+    --code-bg: #0B1017;
+    --code-ink: #CBD9E8;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 28px 18px 48px;
+  }
+  main {
+    max-width: 880px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .eyebrow {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 38px);
+    line-height: 1.1;
+    margin: 6px 0 8px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15.5px;
+    max-width: 62ch;
+    line-height: 1.5;
+  }
+  h2 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    letter-spacing: -0.005em;
+  }
+  .section-intro {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 18px;
+    max-width: 68ch;
+    line-height: 1.55;
+  }
+  section { display: flex; flex-direction: column; }
+
+  /* símbolos */
+  .symbols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+  }
+  .symbol-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .symbol-card svg { width: 100%; height: auto; }
+  .symbol-card strong { font-size: 14px; }
+  .symbol-card span { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+  /* ejemplo resuelto */
+  blockquote {
+    margin: 0 0 20px;
+    padding: 14px 18px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  blockquote cite {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.85;
+  }
+  .worked-example {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 700px) {
+    .worked-example { grid-template-columns: 1fr; }
+  }
+  .pseudocode {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .pseudocode .step-n { color: var(--accent); opacity: 0.9; }
+  figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 12.5px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* reglas */
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li {
+    display: flex; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .rules li::before {
+    content: "→";
+    color: var(--accent);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* checklist */
+  .checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .checklist input[type="checkbox"] {
+    margin-top: 3px;
+    width: 17px; height: 17px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .checklist label { line-height: 1.5; cursor: pointer; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">UNCuyo · Informática — TP4, Parte A</div>
+    <h1>Diagramas de flujo y pseudocódigo</h1>
+    <p class="subtitle">Guía rápida para el paso (c) del análisis algorítmico: los símbolos estándar y un ejemplo resuelto, en el mismo estilo del apunte de Unidad 4.</p>
+  </header>
+
+  <section aria-labelledby="simbolos-h">
+    <h2 id="simbolos-h">1. Los cuatro símbolos que necesitás</h2>
+    <p class="section-intro">Alcanza con estos cuatro para cualquiera de los problemas del TP4. Las flechas simplemente indican el orden en que se ejecutan.</p>
+    <div class="symbols">
+      <div class="symbol-card">
+        <svg viewBox="0 0 140 74" role="img" aria-label="Óvalo, símbolo de inicio o fin">
+          <ellipse cx="70" cy="37" rx="58" ry="27" fill="var(--accent)"/>
+          <text x="70" y="42" text-anchor="middle" font-weight="600" font-size="15" fill="var(--on-accent)">Inicio / Fin</text>
+        </svg>
+        <strong>Óvalo</strong>
+        <span>Un único inicio; uno o más fines. Nunca un paso intermedio.</span>
+      </div>
+      <div class="symbol-card">
+        <svg viewBox="0 0 140 74" role="img" aria-label="Paralelogramo, símbolo de entrada o salida de datos">
+          <polygon points="30,12 128,12 110,62 12,62" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="70" y="34" text-anchor="middle" font-size="13" fill="var(--ink)">Entrada /</text>
+          <text x="70" y="50" text-anchor="middle" font-size="13" fill="var(--ink)">Salida</text>
+        </svg>
+        <strong>Paralelogramo</strong>
+        <span>Leer un dato del usuario, o mostrar/informar un resultado.</span>
+      </div>
+      <div class="symbol-card">
+        <svg viewBox="0 0 140 74" role="img" aria-label="Rectángulo, símbolo de proceso o cálculo">
+          <rect x="14" y="12" width="112" height="50" rx="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="70" y="42" text-anchor="middle" font-size="13" fill="var(--ink)">Proceso</text>
+        </svg>
+        <strong>Rectángulo</strong>
+        <span>Un cálculo o una asignación. Una acción por caja, no varias.</span>
+      </div>
+      <div class="symbol-card">
+        <svg viewBox="0 0 140 74" role="img" aria-label="Rombo, símbolo de decisión">
+          <polygon points="70,8 132,37 70,66 8,37" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="70" y="42" text-anchor="middle" font-size="13" fill="var(--ink)">Decisión</text>
+        </svg>
+        <strong>Rombo</strong>
+        <span>Siempre exactamente dos salidas, etiquetadas (Sí/No, u otras dos opciones).</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="ejemplo-h">
+    <h2 id="ejemplo-h">2. Ejemplo resuelto</h2>
+    <p class="section-intro">Mismo problema del apunte de Unidad 4, llevado a diagrama. Sirve de plantilla para encarar cualquiera de los 4 problemas del TP4.</p>
+    <blockquote>
+      “Felipe es jefe de bodega en una fábrica de alpargatas […] Los pares se embolsan individualmente y luego en cada caja se empacan 12 pares […] Felipe sabe que debe pedir las cajas que puedan llenarse, y que si hubieran pares sobrantes se empacarán con la producción de la semana próxima.”
+      <cite>Adaptado del apunte de Unidad 4 — Algoritmos, plataformas y tópicos avanzados</cite>
+    </blockquote>
+    <div class="worked-example">
+      <div class="pseudocode">
+        <div><span class="step-n">1)</span> Inicio.</div>
+        <div><span class="step-n">2)</span> Leer producción total de la semana (pares).</div>
+        <div><span class="step-n">3)</span> cajas ← producción // 12.</div>
+        <div><span class="step-n">4)</span> sobrantes ← producción % 12.</div>
+        <div><span class="step-n">5)</span> Si sobrantes &gt; 0, informar que se guardan para la próxima semana.</div>
+        <div><span class="step-n">6)</span> Pedir "cajas" cajas al proveedor.</div>
+        <div><span class="step-n">7)</span> Fin.</div>
+      </div>
+      <figure>
+        <svg viewBox="0 0 440 580" role="img" aria-label="Diagrama de flujo que calcula cuántas cajas pedir para empacar la producción semanal de pares, informando si sobran pares para la semana siguiente.">
+          <defs>
+            <marker id="fc-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/>
+            </marker>
+          </defs>
+
+          <g stroke="var(--ink)" stroke-width="1.5" fill="none" marker-end="url(#fc-arrow)">
+            <line x1="170" y1="68" x2="170" y2="98"/>
+            <line x1="170" y1="148" x2="170" y2="178"/>
+            <line x1="170" y1="248" x2="170" y2="278"/>
+            <line x1="170" y1="378" x2="170" y2="428"/>
+            <line x1="260" y1="328" x2="290" y2="328"/>
+            <path d="M355,353 L355,400 L210,400 L210,428"/>
+            <line x1="170" y1="478" x2="170" y2="506"/>
+          </g>
+
+          <ellipse cx="170" cy="40" rx="65" ry="28" fill="var(--accent)"/>
+          <text x="170" y="45" text-anchor="middle" font-weight="600" font-size="15" fill="var(--on-accent)">Inicio</text>
+
+          <polygon points="90,98 270,98 250,148 70,148" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="170" y="118" text-anchor="middle" font-size="12" fill="var(--ink)">Leer producción total</text>
+          <text x="170" y="134" text-anchor="middle" font-size="12" fill="var(--ink)">de la semana (pares)</text>
+
+          <rect x="60" y="178" width="220" height="70" rx="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="170" y="206" text-anchor="middle" font-family="monospace" font-size="11.5" fill="var(--ink)">cajas = producción // 12</text>
+          <text x="170" y="228" text-anchor="middle" font-family="monospace" font-size="11.5" fill="var(--ink)">sobrantes = producción % 12</text>
+
+          <polygon points="170,278 260,328 170,378 80,328" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="170" y="323" text-anchor="middle" font-size="11.5" fill="var(--ink)">¿sobrantes</text>
+          <text x="170" y="337" text-anchor="middle" font-size="11.5" fill="var(--ink)">&gt; 0?</text>
+
+          <text x="178" y="410" font-size="11" fill="var(--muted)">No</text>
+          <text x="266" y="320" font-size="11" fill="var(--muted)">Sí</text>
+
+          <rect x="290" y="303" width="130" height="50" rx="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="355" y="323" text-anchor="middle" font-size="11" fill="var(--ink)">Informar sobrantes</text>
+          <text x="355" y="337" text-anchor="middle" font-size="11" fill="var(--ink)">para próx. semana</text>
+
+          <polygon points="90,428 270,428 250,478 70,478" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="170" y="448" text-anchor="middle" font-size="12" fill="var(--ink)">Pedir “cajas” cajas</text>
+          <text x="170" y="464" text-anchor="middle" font-size="12" fill="var(--ink)">al proveedor</text>
+
+          <ellipse cx="170" cy="534" rx="65" ry="28" fill="var(--accent)"/>
+          <text x="170" y="539" text-anchor="middle" font-weight="600" font-size="15" fill="var(--on-accent)">Fin</text>
+        </svg>
+        <figcaption>El rombo es la única caja con dos flechas de salida — todo lo demás tiene una sola entrada y una sola salida.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="reglas-h">
+    <h2 id="reglas-h">3. Reglas rápidas</h2>
+    <ul class="rules">
+      <li>Un paso, una acción. Si una caja necesita “y” para describirse, son dos cajas.</li>
+      <li>El pseudocódigo se numera en secuencia: “1) Inicio. 2) … N) Fin.” — mismo formato que el apunte de Unidad 4.</li>
+      <li>Toda decisión (rombo) tiene exactamente dos salidas, y ambas van etiquetadas.</li>
+      <li>Si todavía no tenés claras las entradas, salidas y restricciones del problema (paso b), todavía no es momento de dibujar cajas.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="check-h">
+    <h2 id="check-h">4. Antes de entregar la Parte A</h2>
+    <ul class="checklist">
+      <li>
+        <input type="checkbox" id="c1" data-key="c1">
+        <label for="c1">Identificamos entradas, salidas, información relevante, requisitos y restricciones.</label>
+      </li>
+      <li>
+        <input type="checkbox" id="c2" data-key="c2">
+        <label for="c2">Encontramos y documentamos al menos una ambigüedad del enunciado como supuesto explícito.</label>
+      </li>
+      <li>
+        <input type="checkbox" id="c3" data-key="c3">
+        <label for="c3">El diagrama tiene un único Inicio y termina en uno o más Fin.</label>
+      </li>
+      <li>
+        <input type="checkbox" id="c4" data-key="c4">
+        <label for="c4">Cada rombo de decisión tiene sus dos salidas etiquetadas.</label>
+      </li>
+      <li>
+        <input type="checkbox" id="c5" data-key="c5">
+        <label for="c5">Identificamos al menos una función candidata con firma completa (nombre, retorno, parámetros con tipo y nombre) y una línea de documentación.</label>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Basado en el apunte de Unidad 4 — Algoritmos, plataformas y tópicos avanzados (UNCuyo, Ingeniería en Mecatrónica). Las marcas de esta lista se guardan solo en este navegador, para uso personal del grupo mientras trabaja.
+  </footer>
+</main>
+
+<script>
+(function () {
+  try {
+    document.querySelectorAll('.checklist input[type="checkbox"]').forEach(function (cb) {
+      var key = 'tp4-parteA-check-' + cb.dataset.key;
+      cb.checked = localStorage.getItem(key) === '1';
+      cb.addEventListener('change', function () {
+        try { localStorage.setItem(key, cb.checked ? '1' : '0'); } catch (e) {}
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
